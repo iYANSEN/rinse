@@ -50,7 +50,7 @@ The key stays on the server and is never sent to the browser. Without a key ever
 ## Workflow dashboard update
 The home screen now replaces the gamified rank with an actionable **Ready to send** count. Tap the count to filter to complete galleries that have not been shared yet. Job cards are ordered by work state (sync queue, photos needed, photos to review, ready to send, then shared) and show the next useful action. The dashboard sync panel reports offline state and queued actions, including CRM actions.
 
-This release is a focused UX improvement to the existing app. It does not add server-side accounts, multi-device photo sync, or new AI grouping; photos still live in the browser's IndexedDB on the device that captured them.
+This build puts the effort into the workflow and the client link rather than new platform features: no server-side accounts, no multi-device photo sync, and no new AI grouping; photos live in the browser's IndexedDB on the device that captured them.
 
 ## Demo workspace (this build)
 

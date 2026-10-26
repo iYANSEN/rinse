@@ -22,7 +22,9 @@ Before/after photos for small cleaning crews — paired automatically, sent as o
 
 ## Inspiration
 
-A pressure-washing owner I know shoots 20–40 photos per job on his phone. Before/after is the whole product for him, but the tools that do it cost more per month than some of his jobs. His five asks were: group by job, make before/after obvious, give the client something beautiful, survive bad signal, and push the result into his CRM. Rinse is those five things, built small enough for a one-man crew.
+A pressure-washing owner posted his problem on [r/AppIdeas](https://www.reddit.com/r/AppIdeas/s/804F3d7JBV): 20–40 photos per job on his phone, before/after is the whole product for him, and the tools that do it cost more per month than some of his jobs. He listed five asks: group by job, make before/after obvious, give the client something beautiful, survive bad signal, and push the result into his CRM.
+
+I had only ever built things for myself, so this was the first time the requirements were written by someone I have never met — with money on the line and no reason to be polite about whether the result works. That changed how I designed it: every screen had to answer one of those five asks, and anything that didn't got cut. Rinse is those five asks, built small enough for a one-man crew.
 
 ## What it does
 
