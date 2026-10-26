@@ -1,6 +1,6 @@
-# Rinse — demo video (cut v2: 1:18, narrated)
+# Rinse — demo video (cut v3: 1:50, narrated)
 
-`devpost/media/rinse-demo.mp4` — 1920×1080, 30 fps, 1:17.9, AAC stereo, −16 LUFS.
+`devpost/media/rinse-demo.mp4` — 1920×1080, 30 fps, 1:50.4, AAC stereo, −16 LUFS.
 Every frame in the app panel is real footage of the deployed demo captured at 390×844; no UI was
 drawn, mocked or generated. The publish in the video is a real upload to the deployed function.
 
@@ -11,7 +11,7 @@ drawn, mocked or generated. The publish in the video is a real upload to the dep
 | 0:00.0 | 0:04.0 | Title card |
 | 0:04.0 | 0:55.4 | Live app: demo workspace → job list → job → before/after slider → real publish → client gallery → "Ready to send" → offline reload |
 | 0:55.4 | 1:11.7 | "Four docs. Then the app." — scope.md, prd.md, spec.md, BUILD_LOG.md, then the three chips |
-| 1:11.7 | 1:17.9 | End card: demo URL, "No account. No API key. Works offline.", repo URL |
+| 1:11.7 | 1:50.4 | End card: demo URL, "No account. No API key. Works offline.", repo URL — under the sign-off |
 
 ## Narration
 
@@ -26,17 +26,19 @@ drawn, mocked or generated. The publish in the video is a real upload to the dep
 | 0:28.6 | 0:36.9 | Client gallery, slider | On their phone it's a slider, not a folder of forty photos. He sees the difference before he pays. And the link stays the same when you update the job. |
 | 0:41.6 | 0:46.0 | "Ready to send" filter | Back on the list, ready jobs sort to the top, so you know what to send next. |
 | 0:49.3 | 0:55.0 | Offline: orange dot, SYNC OFFLINE | No signal? The jobs still open, because every photo lives on the device, not in the cloud. |
-| 0:55.8 | 1:10.9 | Docs scene | *(the builder's own recording)* I built this with the Build With AI skill pack: scope, then the product doc, then the technical spec, then the build log. And the AI parts are optional: vanilla JavaScript, no build step. |
-| 1:11.9 | 1:17.5 | End card | Rinse. Built for the Build With AI basics hackathon. The demo is open, link below. |
+| 0:55.8 | 1:10.9 | Docs scene | *(the builder's own recording, Voice 006)* I built this with the Build With AI skill pack: scope, then the product doc, then the technical spec, then the build log. And the AI parts are optional: vanilla JavaScript, no build step. |
+| 1:12.1 | 1:50.1 | End card | *(the builder's own recording, Voice 007)* So yeah, this is me speaking. This is a simple project to be honest. It wasn't that hard in terms of technical issues… I wanted to build a more complicated app, but it's going to take a lot more… so I just used this for now. I hope you like it. It was a good experience. This is my first hackathon, and have a good day. |
 
 ## Narration sources
 
-- **0:00–0:55 and 1:11–1:18** — synthesized with `edge-tts`, voice `en-US-AndrewNeural`, rate +6 %,
-  one file per line, placed at the timestamps above, +4.2 dB to sit level with the recorded clip,
-  whole mix normalised to −16 LUFS / −1.5 dBTP. Not the builder's voice.
-- **0:55.8–1:10.9** — the builder's own phone recording (`Voice 006.m4a`), cleaned with a 90 Hz
-  high-pass, FFT denoise, light compression, 120 ms fade in and 400 ms fade out. This is the only
-  human-voiced line in the cut.
+- **0:00–0:55** — synthesized with `edge-tts`, voice `en-US-AndrewNeural`, rate +6 %, one file per
+  line, +4.2 dB to sit level, mix normalised to −16 LUFS.
+- **0:55.8–1:10.9** — the builder's phone recording (Voice 006): 90 Hz high-pass, FFT denoise,
+  light compression, fades.
+- **1:12.1–1:50.1** — the builder's phone recording (Voice 007): 3.1 s of dead air cut between
+  phrases (silence under −30 dB held at 0.28 s, 0.50 s after a sentence pause), then 85 Hz
+  high-pass, adaptive FFT denoise (`afftdn`), de-esser, gentle compression, −16 LUFS.
+  The take is dense — 38 s of speech in 41 s of recording, so the tightened file is 37.95 s.
 - No music bed: nothing licensed was available, and a silent bed is better than a stolen track.
 
 ## Honesty rules the cut obeys
@@ -45,11 +47,11 @@ drawn, mocked or generated. The publish in the video is a real upload to the dep
 - No key, `.env`, terminal with secrets, or Vercel dashboard appears.
 - Nothing claimed that the app does not do: no automatic captions for the client, no follow-up texts,
   no rebook reminders, no calendar feed.
-- The sample photos are a real pressure-washing business's public portfolio, not the builder's jobs;
+- The demo photos are a real pressure-washing business's public portfolio, not the builder's jobs;
   the demo banner on screen says so.
 
 ## Rebuild
 
 Sources in `%TEMP%\opencode\videoflow`: `compose2.js` (1920×1080 cut), `build-scene.js` (docs scene),
-`mix-audio.js` (narration, loudness, mux), `gen-voice.js` + `tts_run.py` (edge-tts lines).
-Earlier silent draft: `devpost/media/rinse-demo-60s.mp4`.
+`process-voice7.js` (cut, denoise, level the sign-off), `mix-audio.js` (narration, loudness, mux),
+`gen-voice.js` + `tts_run.py` (edge-tts lines).
