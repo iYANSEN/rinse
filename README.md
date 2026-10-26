@@ -2,7 +2,7 @@
 
 Before/after photo management for pressure-washing and other exterior-service crews. Shoot on site, Rinse pairs the photos, and your client gets **one link with a slider**. Works with no signal. Built for the Devpost *Build With AI: Basics* hackathon.
 
-**Try it:** open the app and press **Try the demo job** (no sign-in, no key needed).
+**Try it:** open the app and press **Explore the demo · 11 jobs**, or go straight to `/?demo=1` (no sign-in, no key needed). Your own workspace starts empty.
 
 ## What it does
 | The business owner asked for | In Rinse |
@@ -50,13 +50,14 @@ The home screen now replaces the gamified rank with an actionable **Ready to sen
 
 This release is a focused UX improvement to the existing app. It does not add server-side accounts, multi-device photo sync, or new AI grouping; photos still live in the browser's IndexedDB on the device that captured them.
 
-## Expanded demo workspace (this build)
+## Demo workspace (this build)
 
+- Your own jobs live in a separate database from the demo, so the app you open is empty until you add work. `/?demo=1` opens the samples; `/?demo=1&reset=1` reseeds them.
+- 11 sample jobs with 21 sample before/after photographs from `paired-photos/`, dated over the past nine days, plus two upcoming jobs on the calendar. Nine have complete pairs, one still needs its after photo, and one is unpaired so you can try **Pair**.
+- A banner marks the sample workspace: **Reset** reseeds it, **Exit demo** returns to your own jobs.
 - The home dashboard's **Jobs**, **Ready to send**, and **Sync** status cells are interactive.
 - **Calendar** provides a month grid and agenda based on each job's date and due date.
 - Jobs support a date, due date, and notes; job pages include a chronological timeline.
 - **Contacts** builds a local customer list from job names, supports the browser Contact Picker where available, and can import/export CSV.
-- Settings inputs use a dark readable text color even when the app theme is dark.
-- A fresh workspace seeds four demo jobs with different workflow states and offline-safe illustrative images.
-
-The included demo images are generated sample illustrations rather than genuine job-site photographs. Replace them with licensed stock images or your own authorized job photos before presenting them as real project evidence. Contact Picker support depends on the browser and device; CSV import/export is the fallback. Contacts remain local to this browser and are not automatically synchronized to the phone's address book.
+- Settings inputs stay readable in both themes; the job page puts the client link and sliders first and keeps the timeline collapsed.
+- Sample photos are bundled placeholders, not a real customer's job. Replace them with your own authorized job photos before presenting them as evidence. Contact Picker support depends on the browser and device; CSV import/export is the fallback. Contacts remain local to this browser and are not automatically synchronized to the phone's address book.

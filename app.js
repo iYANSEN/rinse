@@ -4,7 +4,7 @@
   'use strict';
   const $ = (s, r) => (r || document).querySelector(s);
   const app = $('#app'), esc = Gallery.esc;
-  let db, cur = null, objUrls = [], publishing = null, busy = false, health = { ai: false, share: '', sharePersistent: true };
+  let db, cur = null, objUrls = [], publishing = null, busy = false, entering = false, health = { ai: false, share: '', sharePersistent: true };
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   const hash = (s) => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
   const COLORS = ['#0a7a79', '#1d4ed8', '#15803d', '#6d28d9', '#b91c1c', '#334155'];
@@ -79,8 +79,17 @@
       return await res.blob();
     }
 
+    // Fetch the sample photos in parallel first: one round trip each, so the demo is ready
+    // in a couple of seconds instead of waiting on 21 sequential downloads.
+    const fetched = {};
+    await Promise.all(PAIRS.flatMap((p) => (p.num === 8 ? [p.num + '-1' + p.ext] : [p.num + '-1' + p.ext, p.num + '-2' + p.ext]))
+      .map(async (file) => {
+        try { const r = await fetch('/paired-photos/' + file); if (r.ok) fetched[file] = await r.blob(); } catch (e) { /* counted below */ }
+      }));
+
     async function makePhotoFromUrl(url, meta) {
-      const blob = await loadPhotoAsBlob(url);
+      const file = url.split('/').pop();
+      const blob = fetched[file] || await loadPhotoAsBlob(url);
       const bmp = await decode(blob);
       return makePhoto(bmp, bmp.width, bmp.height, meta);
     }
@@ -421,7 +430,33 @@
     sheet('Import contacts',[['Choose a CSV file',()=>{const i=document.createElement('input');i.type='file';i.accept='.csv,text/csv';i.onchange=async()=>{const f=i.files[0];if(!f)return;const lines=(await f.text()).split(/\r?\n/).filter(Boolean);const rows=lines.slice(1).map(line=>line.split(',').map(x=>x.trim().replace(/^"|"$/g,''))).filter(x=>x[0]);let saved=[];try{saved=JSON.parse(localStorage.getItem(contactsKey())||'[]')}catch(e){};rows.forEach(r=>saved.push({name:r[0],phone:r[1]||'',email:r[2]||''}));localStorage.setItem(contactsKey(),JSON.stringify(saved));toast('Imported '+rows.length+' contacts.');renderContacts();};i.click();}],['Cancel',null]]);
   }
   async function contactsExport() { const jobs=await all('jobs');let saved=[];try{saved=JSON.parse(localStorage.getItem(contactsKey())||'[]')}catch(e){};const m=new Map();jobs.forEach(j=>{if(j.client){const k=j.client.toLowerCase();if(!m.has(k))m.set(k,{name:j.client,phone:j.phone||'',email:''});}});saved.forEach(c=>{if(c.name)m.set(c.name.toLowerCase(),c)});const csv=['Name,Phone,Email',...[...m.values()].map(c=>[c.name,c.phone,c.email].map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(','))].join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='rinse-contacts.csv';a.click();toast('Contacts exported.'); }
-  function addContact() { const name=prompt('Contact name');if(!name||!name.trim())return;const phone=prompt('Phone (optional)')||'',email=prompt('Email (optional)')||'';let saved=[];try{saved=JSON.parse(localStorage.getItem(contactsKey())||'[]')}catch(e){};saved.push({name:name.trim(),phone:phone.trim(),email:email.trim()});localStorage.setItem(contactsKey(),JSON.stringify(saved));renderContacts(); }
+  function addContact() {
+    let d = $('#cdlg');
+    if (!d) {
+      d = document.createElement('dialog');
+      d.id = 'cdlg';
+      d.innerHTML = '<form method="dialog"><h2>Add contact</h2><p class="hint">Saved on this phone. Jobs with the same client name pick these details up.</p>' +
+        '<label>Name<input id="c-name" maxlength="80" required autocomplete="name" placeholder="Mrs. Smith"></label>' +
+        '<label>Phone<input id="c-phone" type="tel" maxlength="30" autocomplete="tel" placeholder="(555) 123-4567"></label>' +
+        '<label>Email<input id="c-email" type="email" maxlength="120" autocomplete="email" placeholder="name@example.com"></label>' +
+        '<menu><button value="cancel" class="btn" type="submit" formnovalidate>Cancel</button><button value="ok" class="btn primary" type="submit">Save contact</button></menu></form>';
+      document.body.appendChild(d);
+      d.addEventListener('click', (e) => { if (e.target === d) d.close(); });
+      d.querySelector('form').onsubmit = (e) => {
+        if (!(e.submitter && e.submitter.value === 'ok')) return;
+        const name = $('#c-name').value.trim().slice(0, 80);
+        if (!name) { e.preventDefault(); $('#c-name').focus(); return; }
+        let saved = [];
+        try { saved = JSON.parse(localStorage.getItem(contactsKey()) || '[]'); } catch (er) { saved = []; }
+        saved.push({ name, phone: $('#c-phone').value.trim().slice(0, 30), email: $('#c-email').value.trim().slice(0, 120) });
+        localStorage.setItem(contactsKey(), JSON.stringify(saved));
+        toast('Contact saved.');
+        renderContacts();
+      };
+    }
+    $('#c-name').value = ''; $('#c-phone').value = ''; $('#c-email').value = '';
+    d.showModal(); $('#c-name').focus();
+  }
 
   // ---------- actions ----------
   const pairOf = async (pid) => groupPairs(await photosOf(cur.id)).pairs.find((p) => p.id === pid);
@@ -452,12 +487,16 @@
     }
   }
   async function enterDemo(reset) {
-    cur = null; setMode('demo');
-    if (reset) { if (db) { try { db.close(); } catch (e) {} db = null; } await deleteDb('rinse-demo'); }
-    await open();
-    updateBanner();
-    await renderHome();
-    await seedDemo(true);
+    if (entering) return;
+    entering = true;
+    try {
+      cur = null; setMode('demo');
+      if (reset) { if (db) { try { db.close(); } catch (e) {} db = null; } await deleteDb('rinse-demo'); }
+      await open();
+      updateBanner();
+      await renderHome();
+      await seedDemo(true);
+    } finally { entering = false; }
   }
   async function exitDemo() {
     cur = null; setMode('live');
@@ -466,7 +505,6 @@
     await renderHome();
     toast('Back to your own jobs.');
   }
-  async function startDemo() { await enterDemo(false); if (await getJob('demo-01')) await openJob('demo-01'); }
   function jobDialog(job) {
     const d = $('#jdlg'); $('#j-title').textContent = job ? 'Edit job' : 'New job'; $('#j-name').value = job ? job.name : ''; $('#j-client').value = job ? job.client || '' : ''; $('#j-addr').value = job ? job.address || '' : ''; $('#j-date').value = job ? job.date || new Date().toISOString().slice(0,10) : new Date().toISOString().slice(0,10); $('#j-due').value = job ? job.dueDate || '' : ''; $('#j-notes').value = job ? job.notes || '' : ''; d.dataset.id = job ? job.id : ''; d.returnValue = ''; d.showModal();
   }
@@ -478,7 +516,7 @@
   async function onAct(act, el) {
     const pid = el.dataset.pid, id = el.dataset.id;
     if (act === 'new') return jobDialog(null);
-    if (act === 'demo') return startDemo();
+    if (act === 'demo') return enterDemo(false);
     if (act === 'mode-demo') return enterDemo(false);
     if (act === 'mode-live') return exitDemo();
     if (act === 'demo-reset') return enterDemo(true);
