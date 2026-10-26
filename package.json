@@ -1,0 +1,11 @@
+{
+  "name": "rinse",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "test:ai": "node scripts/test-ai.js",
+    "test:e2e": "bash test/run_all.sh"
+  },
+  "engines": { "node": ">=18" }
+}

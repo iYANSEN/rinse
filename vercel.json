@@ -1,0 +1,12 @@
+{
+  "functions": { "api/pair.js": { "maxDuration": 60 } },
+  "rewrites": [
+    { "source": "/g/:id", "destination": "/api/g?id=:id" },
+    { "source": "/g/:id/:f", "destination": "/api/g?id=:id&f=:f" }
+  ],
+  "redirects": [
+    { "source": "/.env", "destination": "/", "permanent": false },
+    { "source": "/.env.:ext", "destination": "/", "permanent": false }
+  ],
+  "headers": [{ "source": "/sw.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }]
+}

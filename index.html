@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rinse: before and after photos, sorted and ready to send</title>
+<meta name="description" content="Shoot before and after photos on the job. Rinse pairs them, then gives your client a link with a slider. Works offline.">
+<meta name="theme-color" content="#0a7a79">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preload" href="fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="nav"><div class="nav-in">
+  <a class="logo" href="#" id="home-link" aria-label="Rinse, all jobs"><svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="22" fill="#0a7a79"/><path d="M50 18C50 18 28 44 28 58a22 22 0 0044 0C72 44 50 18 50 18z" fill="#fff"/><path d="M40 60l7 7 14-16" fill="none" stroke="#0a7a79" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Rinse</span></a>
+  <div class="nav-r">
+    <button id="net" type="button" class="chip" aria-live="polite" title="Tap to sync now">Online</button>
+    <button id="calendar-top" type="button" class="btn quiet">Calendar</button>
+    <button id="contacts-top" type="button" class="btn quiet">Contacts</button>
+    <button id="demo-top" type="button" class="btn quiet">Demo job</button>
+    <button id="settings" type="button" class="btn quiet" aria-label="Settings">Settings</button>
+    <span class="soon" title="Accounts and team sync are coming">Log in</span>
+  </div>
+</div></header>
+<main id="app" tabindex="-1"></main>
+<footer class="foot">Rinse. Photos stay on your phone until you share a link.<br><em>made by YANSEN, Agadir</em></footer>
+
+<dialog id="dlg"><form method="dialog" id="set-form">
+  <h2>Settings</h2>
+  <p class="hint">These appear on every client gallery.</p>
+  <label>Business name<input id="s-biz" autocomplete="organization" placeholder="Sparkle Pressure Washing"></label>
+  <div class="two">
+    <label>Phone<input id="s-phone" type="tel" autocomplete="tel" placeholder="(555) 123-4567"></label>
+    <label>Footer line<input id="s-contact" placeholder="Licensed and insured"></label>
+  </div>
+  <label>Google review link<input id="s-review" type="url" inputmode="url" placeholder="https://g.page/r/…/review"></label>
+  <fieldset><legend>Gallery colour</legend><div id="s-colors" class="swatches"></div></fieldset>
+  <div class="logo-row"><img id="s-logo-img" alt="" hidden><label class="btn">Upload logo<input id="s-logo" type="file" accept="image/*" hidden></label><button type="button" class="btn quiet" id="s-logo-clear" hidden>Remove logo</button></div>
+  <hr>
+  <fieldset><legend>Theme</legend><div class="theme-radios" id="s-theme"><label><input type="radio" name="theme" value="system" checked> System</label><label><input type="radio" name="theme" value="light"> Light</label><label><input type="radio" name="theme" value="dark"> Dark</label></div></fieldset>
+  <hr>
+  <label>CRM webhook (Zapier or Make “catch hook”)<input id="s-hook" type="url" inputmode="url" placeholder="https://hooks.zapier.com/hooks/catch/…"></label>
+  <label class="check"><input id="s-auto" type="checkbox"> Send to CRM automatically when a client link is ready</label>
+  <div class="row"><button type="button" class="btn" id="s-test">Send test to CRM</button></div>
+  <p class="hint" id="s-ai"></p>
+  <menu><button value="cancel" class="btn" type="submit">Cancel</button><button value="ok" class="btn primary" type="submit">Save</button></menu>
+</form></dialog>
+
+<dialog id="jdlg"><form method="dialog" id="j-form">
+  <h2 id="j-title">New job</h2>
+  <label>Job name<input id="j-name" required maxlength="80" placeholder="Smith driveway and patio" autocomplete="off"></label>
+  <label>Client<input id="j-client" maxlength="80" placeholder="Mrs. Smith" autocomplete="off"></label>
+  <label>Address<input id="j-addr" maxlength="120" placeholder="12 Maple Lane" autocomplete="street-address"></label>
+  <div class="two"><label>Job date<input id="j-date" type="date"></label><label>Due date<input id="j-due" type="date"></label></div>
+  <label>Notes<input id="j-notes" maxlength="240" placeholder="Gate code, surface notes, customer requests"></label>
+  <menu><button value="cancel" class="btn" type="submit" formnovalidate>Cancel</button><button value="ok" class="btn primary" type="submit">Save job</button></menu>
+</form></dialog>
+
+<dialog id="sheet" class="sheet"><div id="sheet-in"></div></dialog>
+<div id="cam" class="cam" role="dialog" aria-modal="true" aria-label="Camera" hidden></div>
+<div id="toasts" class="toasts" role="status" aria-live="polite"></div>
+
+<script src="pairing.js"></script>
+<script src="gallery-template.js"></script>
+<script src="app.js"></script>
+<script src="flair.js"></script>
+</body>
+</html>

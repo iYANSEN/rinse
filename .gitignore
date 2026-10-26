@@ -1,0 +1,6 @@
+.env
+data/
+node_modules
+.vercel
+test/out/
+test/photos/
