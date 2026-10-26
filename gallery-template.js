@@ -106,7 +106,7 @@
     }).join('');
     var meta = [g.address, g.date].filter(Boolean).map(esc).join(' \u00b7 ');
     var head = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">' +
-      '<title>' + esc(g.title || 'Before & after') + ' \u2013 ' + esc(biz) + '</title><meta name="robots" content="noindex">' + '<meta name="theme-color" content="' + color + '">' +
+      '<title>' + esc(g.title || 'Before & after') + ' \u2013 ' + esc(biz) + '</title><meta name="robots" content="noindex">' + '<link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png">' + '<meta name="theme-color" content="' + color + '">' +
       (opts.og ? '<meta property="og:title" content="' + esc((g.title || 'Before & after') + ' \u2013 ' + biz) + '"><meta property="og:description" content="' + esc(n + (n === 1 ? ' area' : ' areas') + ' transformed. Slide to compare.') + '"><meta property="og:type" content="website">' +
         (opts.og.url ? '<meta property="og:url" content="' + esc(opts.og.url) + '">' : '') + (opts.og.image ? '<meta property="og:image" content="' + esc(opts.og.image) + '"><meta name="twitter:card" content="summary_large_image">' : '') : '') +
       '<style>' + font + CSS + ':root{--brand:' + color + '}</style></head><body>';
