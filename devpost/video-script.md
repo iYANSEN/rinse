@@ -40,8 +40,17 @@ drawn, mocked or generated. The publish in the video is a real upload to the dep
   file is 37.95 s.
 - An earlier phone recording (Voice 006, the "how I built it" line) was used at 0:55.8 and has been
   removed at the builder's request.
-- No music bed: nothing licensed was available, and a silent bed is better than a stolen track.
+## Music
 
+**"Inspired" — Kevin MacLeod (incompetech.com)**, licensed under Creative Commons Attribution 4.0
+(https://creativecommons.org/licenses/by/4.0/). First 1:50 of the track, faded 1.8 s in and 4 s out,
+normalised to −26 LUFS and side-chain ducked under the voice, so the bed sits ~10 LU below the
+narration and comes back up in the gaps.
+
+**Attribution must appear where the video is published** — paste this into the YouTube description:
+
+> Music: "Inspired" by Kevin MacLeod (incompetech.com), licensed under Creative Commons
+> Attribution 4.0 — https://creativecommons.org/licenses/by/4.0/
 ## Honesty rules the cut obeys
 
 - No frame of UI is drawn or invented; the phone panel is the deployed app.
