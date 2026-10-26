@@ -1,3 +1,21 @@
+# Never publish these on the deployment
 .env
-data
+.env.*
+!.env.example
+node_modules
+.vercel
+
+# Dev-only, not needed at runtime
 test
+scripts
+devpost
+data
+server.js
+dbg-sec.js
+import-demo.js
+demo-data.js
+demo-seed.json
+demo-photos
+
+# Docs
+*.md

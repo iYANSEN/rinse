@@ -108,26 +108,20 @@
       // Load before photo - catch errors so one bad photo doesn't blank the whole app
       let beforePhoto;
       try {
-        const blob = await fetch(beforeUrl).then(r => r.ok ? res.blob() : null);
-        if (!blob) throw new Error('Failed to load ' + beforeUrl);
-        const bmp = await decode(blob);
-        beforePhoto = Object.assign({ id: uid(), blob: await big.blob(), thumb: small.url(), sig: signatureOf(await loadImg(bmp.src)), role: 'before', pairId: pairId, t: t0 }, meta);
+        beforePhoto = await makePhotoFromUrl(beforeUrl, { jobId, name: beforeFile, role: 'before', pairId, t: t0 });
       } catch (e) {
         toast('Could not load demo photo ' + beforeFile + ': ' + e.message);
-        beforePhoto = { id: uid(), jobId: jobId, blob: null, thumb: '', sig: null, role: 'before', pairId: pairId, t: t0, name: beforeFile, cap: '' };
+        beforePhoto = { id: uid(), jobId, blob: null, thumb: '', sig: null, role: 'before', pairId, t: t0, name: beforeFile, cap: '' };
       }
       await put('photos', beforePhoto);
 
       // Load after photo - catch errors so one bad photo doesn't blank the whole app
       let afterPhoto;
       try {
-        const blob = await fetch(afterUrl).then(r => r.ok ? res.blob() : null);
-        if (!blob) throw new Error('Failed to load ' + afterUrl);
-        const bmp = await decode(blob);
-        afterPhoto = Object.assign({ id: uid(), blob: await big.blob(), thumb: small.url(), sig: signatureOf(await loadImg(bmp.src)), role: 'after', pairId: pairId, t: t0 + 7200000, cap: p.cap }, meta);
+        afterPhoto = await makePhotoFromUrl(afterUrl, { jobId, name: afterFile, role: 'after', pairId, t: t0 + 7200000, cap: p.cap });
       } catch (e) {
         toast('Could not load demo photo ' + afterFile + ': ' + e.message);
-        afterPhoto = { id: uid(), jobId: jobId, blob: null, thumb: '', sig: null, role: 'after', pairId: pairId, t: t0 + 7200000, name: afterFile, cap: '' };
+        afterPhoto = { id: uid(), jobId, blob: null, thumb: '', sig: null, role: 'after', pairId, t: t0 + 7200000, name: afterFile, cap: '' };
       }
       await put('photos', afterPhoto);
     }
@@ -135,8 +129,23 @@
     return (await all('jobs')).filter(j => j.demo)[0]?.id;
   }
   async function ensureDemoWorkspace() {
-    const jobs=await all('jobs');
-    const demos=jobs.filter(j=>j.demo);
+    let jobs = await all('jobs');
+    let demos = jobs.filter((j) => j.demo);
+    // Repair demo jobs saved by an earlier version with no image data, so a browser that
+    // opened the broken build once still ends up with a working demo.
+    const broken = [];
+    for (const j of demos) {
+      const ps = await photosOf(j.id);
+      if (!ps.length || ps.some((p) => !p.thumb || !p.blob)) broken.push(j);
+    }
+    if (broken.length) {
+      for (const j of broken) {
+        const ps = await photosOf(j.id);
+        for (const p of ps) await del('photos', p.id);
+        await del('jobs', j.id);
+      }
+      demos = (await all('jobs')).filter((j) => j.demo);
+    }
     // Only seed demo jobs if none exist yet (prevents duplication across workspaces)
     if (demos.length === 0) await makeDemo();
   }
@@ -522,8 +531,8 @@
   $('#s-logo-clear').onclick = () => { pendingLogo = ''; logoUi(); };
   $('#s-test').onclick = async () => { const u = $('#s-hook').value.trim(); if (!okHook(u)) { toast('Enter an https:// webhook address first.'); return; } if (!navigator.onLine) { toast('You are offline.'); return; }
     try { await postHook(u, { event: 'rinse_test', business: $('#s-biz').value.trim(), job: { id: 'test', name: 'Test job', client: 'Test client', address: '1 Example St', date: new Date().toISOString().slice(0, 10) }, photos: 8, pairs: 4, areas: 'Driveway, Deck', message: 'This is a test from Rinse.', gallery_url: 'https://example.com/g/test', sent_at: new Date().toISOString() }); toast('Test sent. Check your Zap or scenario history.', 4500); } catch (e) { toast('Could not reach that address.'); } };
-  $('#s-export-pairs').onclick = exportPairsPatch;
-  $('#s-clear-demos').onclick = clearDemoJobs;
+  const ep = $('#s-export-pairs'); if (ep) ep.onclick = exportPairsPatch;
+  const cd = $('#s-clear-demos'); if (cd) cd.onclick = clearDemoJobs;
   $('#set-form').onsubmit = (e) => { if (e.submitter && e.submitter.value === 'ok') { const col = ($('#s-colors input:checked') || {}).value || COLORS[0];
     const theme = ($('#s-theme input:checked') || {}).value || 'system';
     localStorage.setItem('rinse.settings', JSON.stringify({ business: $('#s-biz').value.trim().slice(0, 80), phone: $('#s-phone').value.trim().slice(0, 30), contact: $('#s-contact').value.trim().slice(0, 120), review: $('#s-review').value.trim().slice(0, 300), color: col, logo: pendingLogo || '', hook: $('#s-hook').value.trim().slice(0, 500), autoCrm: $('#s-auto').checked, theme })); applyTheme(theme); toast('Saved.'); flush(); if (cur) renderJob(); } };

@@ -1,4 +1,5 @@
 {
+  "framework": null,
   "functions": { "api/pair.js": { "maxDuration": 60 } },
   "rewrites": [
     { "source": "/g/:id", "destination": "/api/g?id=:id" },
@@ -8,5 +9,14 @@
     { "source": "/.env", "destination": "/", "permanent": false },
     { "source": "/.env.:ext", "destination": "/", "permanent": false }
   ],
-  "headers": [{ "source": "/sw.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }]
+  "headers": [
+    { "source": "/sw.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    }
+  ]
 }

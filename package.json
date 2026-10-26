@@ -7,5 +7,10 @@
     "test:ai": "node scripts/test-ai.js",
     "test:e2e": "bash test/run_all.sh"
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@vercel/blob": "^2.8.2"
+  }
 }
