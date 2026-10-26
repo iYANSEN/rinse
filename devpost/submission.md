@@ -74,6 +74,20 @@ Accounts and a small team (two phones, one job), cross-device sync, timestamp/GP
 
 ---
 
+## Short answers (255-character fields)
+
+**Explain how your project meets the main technology requirement.** (247)
+
+> Rinse is built with AI and uses it: an optional LLM pairs photos, writes area captions and drafts the client message behind a serverless key. A deterministic fingerprint matcher does the same pairing offline, so it works with no key and no signal.
+
+**Tell us more about the value your project provides for you?** (241)
+
+> The first app I have shipped for someone else, a pressure-washing owner I found on r/AppIdeas. Everything I built before was for personal use. Now I have a real tool for crews, a portfolio piece that needs no account, and proof I can finish.
+
+**If we could fix one thing before the next person tries this, what should it be?** (232)
+
+> Add a docs-vs-build reconciliation step before shipping. Mid-build decisions (two databases, Blob storage, optional AI) left scope, prd and spec describing an app that no longer existed; I only noticed by re-reading them at the end.
+
 ## Notes for the submission form
 
 - The hackathon asks for a public repo. Keep `README.md`, `devpost/scope.md`, `devpost/prd.md` and `devpost/spec.md` at the top of the repo — they describe exactly what was built.
