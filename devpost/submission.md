@@ -36,6 +36,8 @@ Everything works offline: jobs, photos, pairing and link creation queue on the p
 
 ## How we built it
 
+Built with the Devpost Learn Skill Pack, step by step: `1-start` wrote my learner profile so the plan matched how I actually work; `2-scope` forced the cut (scope.md: the pressure-washing owner's five asks, what is out, what "working" means); `3-prd` turned that into every screen, rule and edge case (prd.md); `4-spec` pinned the stack — vanilla JS, IndexedDB, two isolated workspaces, deterministic pairing with the model optional (spec.md); `5-build` executed the spec in ordered steps, each verified and committed — the honest record is in BUILD_LOG.md; `6-ship` produced the submission text and demo plan in devpost/.
+
 Vanilla JavaScript, no framework, no build step — one page, a service worker and IndexedDB. Photos never leave the device during capture: they are downscaled to 1600 px plus a 384 px thumbnail with canvas, and a 32×24 fingerprint is computed for pairing.
 
 Pairing runs in two layers: a deterministic visual matcher (fingerprint distance plus capture order) that works with no network, and an optional AI pass that can also write area captions and the client message. When the model is unavailable the app falls back to the local matcher and a template message, so the demo never becomes a dead end.

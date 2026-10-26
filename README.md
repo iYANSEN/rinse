@@ -4,9 +4,13 @@ Before/after photo management for pressure-washing and other exterior-service cr
 
 **Try it:** **[rinse-weld-kappa.vercel.app/?demo=1](https://rinse-weld-kappa.vercel.app/?demo=1)** — 11 sample jobs, no sign-in and no API key needed (or press **Explore the demo · 11 jobs** on the home screen). Your own workspace starts empty.
 
+**Source:** [github.com/iYANSEN/rinse](https://github.com/iYANSEN/rinse)
+
 **See a client link:** [rinse-weld-kappa.vercel.app/g/iO3CCoUAEW0](https://rinse-weld-kappa.vercel.app/g/iO3CCoUAEW0)
 
 **Planning docs:** [scope.md](scope.md) · [prd.md](prd.md) · [spec.md](spec.md) · [build log](BUILD_LOG.md) — with the [competitor research](COMPETITORS.md) and the [design system](DESIGN.md) behind them.
+
+**Built with the Devpost Learn Skill Pack:** `1-start` (learner profile) → `2-scope` (scope.md) → `3-prd` (prd.md) → `4-spec` (stack, data, file structure) → `5-build` (ordered, verified, committed steps) → `6-ship` (submission text and demo plan). The skill pack is the method, not a feature — see [devpost/story.md](devpost/story.md) for how each step changed the build.
 
 ## What it does
 | The business owner asked for | In Rinse |
@@ -65,3 +69,7 @@ This build puts the effort into the workflow and the client link rather than new
 - **Contacts** builds a local customer list from job names, supports the browser Contact Picker where available, and can import/export CSV.
 - Settings inputs stay readable in both themes; the job page puts the client link and sliders first and keeps the timeline collapsed.
 - Sample photos come from a working pressure-washing business's public before/after portfolio: real surfaces, but not my jobs. Replace them with your own authorized job photos before presenting them as client evidence. Contact Picker support depends on the browser and device; CSV import/export is the fallback. Contacts remain local to this browser and are not automatically synchronized to the phone's address book.
+
+## License
+
+[MIT](LICENSE) © 2026 iYANSEN. Demo music ("Inspired", Kevin MacLeod) is CC BY 4.0 — see [video-script.md](devpost/video-script.md) for the attribution to paste on the video page.
