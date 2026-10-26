@@ -17,7 +17,7 @@ Before/after photos for small cleaning crews — paired automatically, sent as o
 - **Live app:** https://rinse-weld-kappa.vercel.app
 - **Demo (no account needed):** https://rinse-weld-kappa.vercel.app/?demo=1
 - **Example client link:** https://rinse-weld-kappa.vercel.app/g/iO3CCoUAEW0
-- **Repo:** <add public GitHub URL here>
+- **Repo:** https://github.com/iYANSEN/rinse
 - **Video:** <add 1–3 min demo video URL here>
 
 ## Inspiration
