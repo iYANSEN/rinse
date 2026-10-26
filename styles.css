@@ -56,7 +56,7 @@ main:focus { outline:none; }
 .logo:hover svg { transform:rotate(-12deg) scale(1.08); }
 .nav-r { display:flex; align-items:center; gap:4px; }
 .soon { color:var(--muted); opacity:.5; font-size:.85rem; padding:0 10px; cursor:default; }
-@media (max-width:640px) { .soon, #demo-top { display:none; } }
+@media (max-width:640px) { .nav-r .btn { font-size:.8rem; } }
 
 /* Buttons — flat, 8px, 48px primary targets */
 .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:0 18px; border-radius:var(--r-sm); border:1px solid var(--hair); background:var(--canvas); color:var(--ink); font:600 .95rem var(--sans); cursor:pointer; text-decoration:none; position:relative; overflow:hidden; transition:transform .12s, background .15s, box-shadow .2s, border-color .15s; }
@@ -135,6 +135,9 @@ main { max-width:1100px; margin:0 auto; padding:28px 16px 140px; }
 .stat::before { content:"▣"; color:var(--primary); font-size:.9em; }
 .stat.todo { border-color:var(--before); background:linear-gradient(180deg,#fff4ec,#fff); box-shadow:0 0 0 3px rgba(194,65,12,.07); }
 .stat.todo::before { color:var(--before); }
+@media (prefers-color-scheme:dark) {
+  :root:not([data-theme="light"]) .stat.todo { background:#3d2510; color:#fdba74; box-shadow:0 0 0 3px rgba(251,146,60,.12); }
+}
 .sec { margin-top:36px; }
 .sec > h2 { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
 .sec > h2::before { content:""; width:18px; height:18px; flex:none; background:var(--primary); -webkit-mask:var(--star) center/contain no-repeat; mask:var(--star) center/contain no-repeat; }
@@ -307,7 +310,7 @@ legend { font-weight:600; font-size:.9rem; color:var(--ink); padding:0; margin-b
 @media (max-width:520px) {
   .hero { padding:26px 18px 20px; margin-bottom:22px; }
   .status-win { grid-template-columns:1fr 1fr; }
-  .status-win > div:last-of-type { grid-column:1/-1; }
+  .status-win .status-cell:nth-of-type(3) { grid-column:1/-1; }
   .status-win .status-cell { grid-column:auto; }
   .status-win .status-foot { grid-column:1/-1; }
   .job-title-row { flex-direction:column; gap:4px; }
@@ -343,7 +346,7 @@ legend { font-weight:600; font-size:.9rem; color:var(--ink); padding:0; margin-b
 .contact-avatar { flex:none; width:42px; height:42px; border-radius:12px; display:grid; place-items:center; background:var(--primary-soft); color:var(--primary); font-weight:800; }
 .contact-copy { flex:1; min-width:0; }
 .contact-copy p { overflow-wrap:anywhere; }
-@media(max-width:640px) { .nav-in { align-items:center; padding-left:10px; padding-right:10px; } .logo { gap:6px; font-size:1.1rem; } .nav-r { gap:0; } .nav-r .btn { font-size:.72rem; padding:0 6px; min-height:36px; } #calendar-top,#contacts-top { display:inline-flex; } .cal-day { min-height:78px; padding:5px 2px; } .cal-event { font-size:1rem; } .cal-dow { font-size:.85rem; } }
+@media(max-width:640px) { .nav-in { align-items:center; padding-left:10px; padding-right:10px; } .logo { gap:6px; font-size:1.1rem; } .nav-r { gap:0; } .nav-r .btn { font-size:.72rem; padding:0 6px; min-height:36px; } #calendar-top,#contacts-top { display:inline-flex; } .cal-day { min-height:78px; padding:5px 2px; } .cal-dow { font-size:.85rem; } }
 @media (prefers-color-scheme:dark) {
   :root:not([data-theme="light"]) .cal-event.due { background:#422006; color:#fdba74; }
 }
@@ -357,3 +360,49 @@ legend { font-weight:600; font-size:.9rem; color:var(--ink); padding:0; margin-b
 .timeline-item p { margin:2px 0; font-size:.9rem; }
 .timeline-item small { color:var(--muted); font-size:.78rem; }
 .timeline-item.upcoming .timeline-dot { background:var(--canvas); border:2px dashed var(--primary); }
+
+/* Collapsible timeline: the job page leads with the photos, not the log */
+.timeline-card { padding:18px; }
+.timeline-card > summary { cursor:pointer; list-style:none; display:flex; align-items:center; gap:10px; font:600 1.25rem var(--sans); color:var(--ink); }
+.timeline-card > summary::-webkit-details-marker { display:none; }
+.timeline-card > summary::before { content:""; width:18px; height:18px; flex:none; background:var(--primary); -webkit-mask:var(--star) center/contain no-repeat; mask:var(--star) center/contain no-repeat; }
+.timeline-card > summary::after { content:"▾"; margin-left:auto; color:var(--muted); transition:transform .2s; }
+.timeline-card[open] > summary::after { transform:rotate(180deg); }
+
+/* Demo workspace banner */
+.demo-banner { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:8px 16px; background:var(--primary-soft); border-bottom:1px solid var(--hair); color:var(--ink); font-size:.85rem; }
+.demo-banner .demo-tag { font:700 .7rem var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--primary); }
+.demo-banner .demo-note { color:var(--muted); }
+.demo-banner .demo-actions { margin-left:auto; display:flex; gap:6px; }
+.demo-banner .btn { background:var(--canvas); }
+@media (max-width:640px) {
+  .demo-banner { padding:8px 12px; }
+  .demo-banner .demo-note { display:none; }
+}
+
+/* Calendar on phones: coloured dots instead of unreadable labels */
+@media (max-width:640px) {
+  .cal-event { display:inline-block; width:6px; height:6px; padding:0; margin:4px 3px 0 0; border-radius:50%; font-size:0; background:var(--primary); overflow:hidden; }
+  .cal-event.due { background:#ea580c; }
+}
+
+/* Phone header: logo + a status dot + the three destinations, never clipped */
+@media (max-width:480px) {
+  .nav-in { padding:0 10px; min-height:56px; gap:4px; }
+  .logo { font-size:1rem; gap:6px; }
+  .logo svg { width:24px; height:24px; }
+  .nav-r { gap:0; }
+  .nav-r .btn { font-size:.78rem; padding:0 6px; min-height:34px; }
+  #net { font-size:0; width:30px; min-height:30px; padding:0; border-radius:50%; display:inline-grid; place-items:center; }
+  #net::before { content:""; width:8px; height:8px; border-radius:50%; background:#16a34a; box-shadow:0 0 0 3px rgba(22,163,74,.18); }
+  #net.off::before { background:var(--before); box-shadow:0 0 0 3px rgba(194,65,12,.18); }
+  #net.wait::before { background:#d97706; animation:pulse 1.5s infinite; }
+  .jmeta { font-size:.95rem; }
+  .hero { padding:22px 16px 18px; border-radius:16px; }
+  .hero h1 { font-size:1.5rem; max-width:20ch; }
+  .hero p { font-size:.95rem; }
+  .status-win { margin-top:16px; }
+  .status-win .status-cell { padding:7px 10px; }
+  .status-win .status-note { font-size:.66rem; }
+  main { padding-top:18px; }
+}

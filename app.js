@@ -24,8 +24,15 @@
   function dropUrls() { objUrls.forEach((u) => { try { URL.revokeObjectURL(u); } catch (e) {} }); objUrls = []; }
   const blobUrl = (b) => { const u = URL.createObjectURL(b); objUrls.push(u); return u; };
 
-  // ---------- IndexedDB ----------
-  function open() { return new Promise((res, rej) => { const r = indexedDB.open('rinse', 1);
+  // ---------- IndexedDB (a separate database per workspace: live vs demo) ----------
+  const mode = () => (localStorage.getItem('rinse.mode') === 'demo' ? 'demo' : 'live');
+  const dbNameFor = (m) => (m === 'demo' ? 'rinse-demo' : 'rinse');
+  const setMode = (m) => localStorage.setItem('rinse.mode', m);
+  const contactsKey = () => (mode() === 'demo' ? 'rinse.contacts.demo' : 'rinse.contacts');
+  function deleteDb(name) { return new Promise((res) => { let q; try { q = indexedDB.deleteDatabase(name); } catch (e) { return res(); } q.onsuccess = q.onerror = q.onblocked = () => res(); }); }
+  function open(name) { return new Promise((res, rej) => {
+    if (db) { try { db.close(); } catch (e) {} db = null; }
+    const r = indexedDB.open(name || dbNameFor(mode()), 1);
     r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('jobs', { keyPath: 'id' }); d.createObjectStore('photos', { keyPath: 'id' }).createIndex('job', 'jobId'); d.createObjectStore('outbox', { keyPath: 'id' }); };
     r.onsuccess = () => { db = r.result; res(); }; r.onerror = () => rej(r.error); }); }
   const rq = (r) => new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
@@ -49,22 +56,19 @@
 
   // ---------- demo job (real paired photos from /paired-photos/) ----------
   async function makeDemo() {
-    // Check if demo jobs already exist (11 jobs with 11 pairs)
-    const existing = (await all('jobs')).filter(j => j.demo);
-    if (existing.length >= 11) return existing[0].id;
 
     const PAIRS = [
       { num: 1, name: 'Concrete Driveway', client: 'Miller Residence', address: '124 Oak Street', cap: 'Front driveway', ext: '.jpg' },
-      { num: 2, name: 'Paved Driveway', client: 'Chen Family', address: '88 Maple Lane', cap: 'Paved driveway', ext: '.png' },
-      { num: 3, name: 'Driveway Washing', client: 'Rodriguez Home', address: '210 Pine Avenue', cap: 'House exterior', ext: '.jpg' },
-      { num: 4, name: 'House Cleaning', client: 'Thompson Property', address: '45 Elm Court', cap: 'Brick walkway', ext: '.jpg' },
-      { num: 5, name: 'Pathway Cleaning', client: 'Williams Backyard', address: '33 Cedar Drive', cap: 'Backyard patio', ext: '.jpg' },
-      { num: 6, name: 'Pathway Cleaning', client: 'Davis Garden', address: '77 Birch Road', cap: 'Garden pathway', ext: '.jpg' },
-      { num: 7, name: 'Pathway Cleaning', client: 'Anderson Entry', address: '12 Summit Lane', cap: 'Front staircase', ext: '.jpg' },
-      { num: 8, name: 'Stairway Cleaning', client: 'Garcia Patio', address: '560 Lake View', cap: 'Patio furniture', ext: '.jpg' },
-      { num: 9, name: 'Patio Cleaning', client: 'Martinez Exterior', address: '99 Ridge Road', cap: 'Side cladding', ext: '.jpg' },
-      { num: 10, name: 'Cladding Cleaning', client: 'Taylor Apartment', address: '4B Harbor Point', cap: 'Balcony deck', ext: '.jpg' },
-      { num: 11, name: 'Balcony Cleaning', client: 'Various Clients', address: 'Multiple locations', cap: 'Mixed areas', ext: '.jpg' },
+      { num: 2, name: 'Paved Driveway', client: 'Chen Family', address: '88 Maple Lane', cap: 'Paved driveway', ext: '.jpg' },
+      { num: 3, name: 'Brick Paver Driveway', client: 'Rodriguez Home', address: '210 Pine Avenue', cap: 'Brick driveway and path', ext: '.jpg' },
+      { num: 4, name: 'House Exterior Wash', client: 'Thompson Property', address: '45 Elm Court', cap: 'Front entry and walls', ext: '.jpg' },
+      { num: 5, name: 'Brick Wall and Side Path', client: 'Williams Home', address: '33 Cedar Drive', cap: 'Side brick wall', ext: '.jpg' },
+      { num: 6, name: 'Patio Cleaning', client: 'Davis Garden', address: '77 Birch Road', cap: 'Backyard patio', ext: '.jpg' },
+      { num: 7, name: 'Side Pathway', client: 'Anderson Entry', address: '12 Summit Lane', cap: 'Side pathway', ext: '.jpg' },
+      { num: 8, name: 'Stairway Cleaning', client: 'Garcia Home', address: '560 Lake View', cap: 'Front staircase', ext: '.jpg' },
+      { num: 9, name: 'Garden Furniture', client: 'Martinez Garden', address: '99 Ridge Road', cap: 'Garden bench and table', ext: '.jpg' },
+      { num: 10, name: 'Cladding Cleaning', client: 'Taylor House', address: '14 Harbor Point', cap: 'Side cladding', ext: '.jpg' },
+      { num: 11, name: 'Balcony Cleaning', client: 'Harbor Point, Unit 4B', address: '4B Harbor Point', cap: 'Balcony floor', ext: '.jpg' },
     ];
 
     const now = Date.now();
@@ -81,73 +85,72 @@
       return makePhoto(bmp, bmp.width, bmp.height, meta);
     }
 
-    for (let i = 0; i < PAIRS.length; i++) {
-      const p = PAIRS[i];
-      const jobId = uid();
-      const pairId = 'p' + uid();
+    // Believable schedule: jobs 1-9 finished over the last nine days, 10-11 are upcoming.
+    const offsets = [-9, -8, -7, -6, -5, -4, -3, -2, -1, 2, 5];
+    let failed = 0;
 
-      const job = {
+    for (let i = 0; i < PAIRS.length; i++) {
+      const p = PAIRS[i], num = String(p.num).padStart(2, '0');
+      const jobId = 'demo-' + num;
+      const offset = offsets[i];
+      const date = new Date(now + offset * 86400000).toISOString().slice(0, 10);
+      const dueDate = offset > 0 ? new Date(now + (offset + 2) * 86400000).toISOString().slice(0, 10) : '';
+      // Job 9 is seeded unpaired so the demo can show Pair; job 8 has only a before photo.
+      const pairId = p.num === 9 ? null : 'p-demo-' + num;
+
+      await put('jobs', {
         id: jobId,
         name: p.name,
         client: p.client,
         address: p.address,
-        date: new Date(now + i * 86400000).toISOString().slice(0, 10),
+        date,
+        dueDate,
         demo: true,
-        created: now + i * 86400000,
+        created: now + offset * 86400000 - 20 * 3600000,
         message: `Hi ${p.client}, your ${p.name.toLowerCase()} looks brand new after today's wash. Slide the photo below to see the difference!`,
-      };
-      await put('jobs', job);
+      });
 
-      const beforeFile = `${p.num}-1${p.ext}`;
-      const afterFile = `${p.num}-2${p.ext}`;
-      const beforeUrl = '/paired-photos/' + beforeFile;
-      const afterUrl = '/paired-photos/' + afterFile;
+      const beforeFile = p.num + '-1' + p.ext, afterFile = p.num + '-2' + p.ext;
+      const t0 = now + offset * 86400000 - 20 * 3600000 + 2 * 3600000;
 
-      const t0 = now + i * 86400000 - 3600000;
-
-      // Load before photo - catch errors so one bad photo doesn't blank the whole app
-      let beforePhoto;
       try {
-        beforePhoto = await makePhotoFromUrl(beforeUrl, { jobId, name: beforeFile, role: 'before', pairId, t: t0 });
-      } catch (e) {
-        toast('Could not load demo photo ' + beforeFile + ': ' + e.message);
-        beforePhoto = { id: uid(), jobId, blob: null, thumb: '', sig: null, role: 'before', pairId, t: t0, name: beforeFile, cap: '' };
-      }
-      await put('photos', beforePhoto);
+        await put('photos', await makePhotoFromUrl('/paired-photos/' + beforeFile, { id: jobId + '-b', jobId, name: beforeFile, role: 'before', pairId, t: t0 }));
+      } catch (e) { failed++; }
 
-      // Load after photo - catch errors so one bad photo doesn't blank the whole app
-      let afterPhoto;
-      try {
-        afterPhoto = await makePhotoFromUrl(afterUrl, { jobId, name: afterFile, role: 'after', pairId, t: t0 + 7200000, cap: p.cap });
-      } catch (e) {
-        toast('Could not load demo photo ' + afterFile + ': ' + e.message);
-        afterPhoto = { id: uid(), jobId, blob: null, thumb: '', sig: null, role: 'after', pairId, t: t0 + 7200000, name: afterFile, cap: '' };
+      if (p.num !== 8) {
+        try {
+          await put('photos', await makePhotoFromUrl('/paired-photos/' + afterFile, { id: jobId + '-a', jobId, name: afterFile, role: 'after', pairId, cap: p.cap, t: t0 + 3 * 3600000 }));
+        } catch (e) { failed++; }
       }
-      await put('photos', afterPhoto);
     }
 
-    return (await all('jobs')).filter(j => j.demo)[0]?.id;
+    if (failed) toast('Some sample photos could not load. Open the demo again to retry.', 5000);
+    return 'demo-01';
   }
-  async function ensureDemoWorkspace() {
-    let jobs = await all('jobs');
-    let demos = jobs.filter((j) => j.demo);
-    // Repair demo jobs saved by an earlier version with no image data, so a browser that
-    // opened the broken build once still ends up with a working demo.
-    const broken = [];
-    for (const j of demos) {
-      const ps = await photosOf(j.id);
-      if (!ps.length || ps.some((p) => !p.thumb || !p.blob)) broken.push(j);
+  // The demo workspace is seeded once, with fixed ids, so boot is idempotent and never
+  // stacks duplicate jobs. A job kept from an earlier broken build is dropped and reseeded.
+  async function demoReady() {
+    const j = await getJob('demo-01');
+    if (!j) return false;
+    const ps = await photosOf('demo-01');
+    return ps.length >= 1 && ps.every((p) => p.thumb && p.blob);
+  }
+  async function clearDemo() {
+    for (const j of (await all('jobs')).filter((x) => x.demo)) {
+      for (const p of await photosOf(j.id)) await del('photos', p.id);
+      await del('jobs', j.id);
     }
-    if (broken.length) {
-      for (const j of broken) {
-        const ps = await photosOf(j.id);
-        for (const p of ps) await del('photos', p.id);
-        await del('jobs', j.id);
-      }
-      demos = (await all('jobs')).filter((j) => j.demo);
-    }
-    // Only seed demo jobs if none exist yet (prevents duplication across workspaces)
-    if (demos.length === 0) await makeDemo();
+  }
+  async function ensureDemoWorkspace(force) {
+    if (!force && await demoReady()) return 'demo-01';
+    await clearDemo();
+    return makeDemo();
+  }
+  // Demo jobs belong to the demo database only. Older builds wrote them into the live one,
+  // so remove any leftovers the first time a live workspace boots.
+  async function purgeDemoFromLive() {
+    if (mode() !== 'live') return;
+    await clearDemo();
   }
 
   // ---------- pairs ----------
@@ -358,15 +361,15 @@
     ).join('');
     const syncLabel = !navigator.onLine ? 'OFFLINE' : pendingOps ? pendingOps + ' PENDING' : 'ALL SAFE';
     app.innerHTML = '<section class="hero"><h1>Before and after photos, ready to send</h1><p>Capture the work, review the pairs, and send your client one beautiful link. Keep shooting without a signal.</p>' +
-      '<div class="row"><button class="btn primary" data-act="new">New job</button><button class="btn" data-act="demo">Try the demo job</button></div>' +
+      '<div class="row"><button class="btn primary" data-act="new">New job</button>' + (mode() === 'demo' ? '<button class="btn" data-act="mode-live">Exit demo</button>' : '<button class="btn" data-act="demo">Explore the demo · 11 jobs</button>') + '</div>' +
       '<div class="status-win"><div class="ttl">[ SYSTEM ] &nbsp; CREW STATUS</div>' +
       '<button class="status-cell" type="button" data-act="filter-all" aria-label="Show all jobs"><small>JOBS</small><strong>' + rows.length + '</strong><span class="status-note">Tap to view all</span></button>' +
       '<button class="status-cell" type="button" data-act="filter-ready" aria-label="Show jobs ready to send"><small>READY TO SEND</small><strong class="rank">' + readyCount + '</strong><span class="status-note">Tap to review</span></button>' +
       '<button class="status-cell" type="button" data-act="sync-details" aria-label="Open sync details"><small>SYNC</small><strong class="sync-value">' + syncLabel + '</strong><span class="status-note">' + (pendingOps ? 'Tap to inspect queue' : navigator.onLine ? 'Tap for sync details' : 'Saved on this device') + '</span></button>' +
       '<div class="status-foot">' + totalPairs + ' BEFORE / AFTER PAIRS CREATED</div></div></section>' +
-      '<section class="sec"><div class="jobs-heading"><h2>' + (homeFilter === 'ready' ? 'Ready to send' : 'Your jobs') + '</h2>' + (homeFilter === 'ready' ? '<button class="btn quiet sm" data-act="filter-all">Show all jobs</button>' : '') + '</div>' +
-      (cards ? '<div class="jobs">' + cards + '</div>' : '<div class="empty"><b>' + (homeFilter === 'ready' ? 'Nothing ready to send yet' : 'No jobs yet') + '</b>' + (homeFilter === 'ready' ? 'Jobs with complete before/after pairs will appear here.' : 'Create your first job, or open the demo to see a finished gallery.') + '</div>') + '</section>';
-    updateNet();
+      '<section class="sec"><div class="jobs-heading"><h2>' + (homeFilter === 'ready' ? 'Ready to send' : mode() === 'demo' ? 'Demo jobs' : 'Your jobs') + '</h2>' + (homeFilter === 'ready' ? '<button class="btn quiet sm" data-act="filter-all">Show all jobs</button>' : '') + '</div>' +
+      (cards ? '<div class="jobs">' + cards + '</div>' : '<div class="empty"><b>' + (homeFilter === 'ready' ? 'Nothing ready to send yet' : mode() === 'demo' ? 'Loading sample jobs…' : 'No jobs yet') + '</b>' + (homeFilter === 'ready' ? 'Jobs with complete before/after pairs will appear here.' : mode() === 'demo' ? 'The demo is loading. If this stays empty, tap Reset in the banner above.' : 'Create your first job, or open the demo to see a finished gallery.') + '</div>') + '</section>';
+    updateNet(); updateBanner();
   }
   async function renderJob() {
     const y = window.scrollY; dropUrls(); const ps = await photosOf(cur.id), g = groupPairs(ps), S = settings(), urls = {};
@@ -375,13 +378,13 @@
     let h = '<div class="crumb"><button class="btn quiet" data-act="home">' + ico('back') + ' Jobs</button></div><div class="jhead"><div><h1>' + esc(cur.name) + '</h1><p class="jmeta">' + esc([cur.client, cur.address, fmtDate(cur.date)].filter(Boolean).join(' \u00b7 ')) + '</p></div><button class="btn quiet" data-act="more" aria-label="More options">' + ico('dots') + '</button></div>' +
       '<div class="stats"><span class="stat">' + g.pairs.length + (g.pairs.length === 1 ? ' pair' : ' pairs') + '</span>' + (cur.dueDate ? '<span class="stat">Due '+esc(fmtDate(cur.dueDate))+'</span>' : '') + (g.loose.length ? '<span class="stat todo">' + g.loose.length + ' to sort</span>' : '') + '<span class="stat">' + ps.length + ' photos</span></div>';
     const timeline=[]; if(cur.created) timeline.push({t:cur.created,title:'Job created',detail:'Job added to Rinse'}); if(ps.length){const times=ps.map(p=>p.t).filter(Boolean).sort((a,b)=>a-b);if(times.length)timeline.push({t:times[0],title:'First photos captured',detail:ps.length+' photo'+(ps.length===1?'':'s')+' currently saved'});if(times.length>1&&times[times.length-1]-times[0]>60000)timeline.push({t:times[times.length-1],title:'Latest photo captured',detail:g.pairs.length+' pair'+(g.pairs.length===1?'':'s')+' organized'});} if(cur.completedAt)timeline.push({t:new Date(cur.completedAt).getTime(),title:'Cleaning marked complete',detail:'Demo job completion milestone'}); if(cur.share&&cur.share.at)timeline.push({t:cur.share.at,title:'Gallery shared',detail:'Client link published'}); timeline.sort((a,b)=>a.t-b.t);
-    h += '<section class="sec card timeline-card"><h2>Job timeline</h2><div class="timeline">'+timeline.map(ev=>'<div class="timeline-item"><span class="timeline-dot"></span><div><strong>'+esc(ev.title)+'</strong><p>'+esc(ev.detail)+'</p><small>'+esc(new Date(ev.t).toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}))+'</small></div></div>').join('')+(cur.share?'':'<div class="timeline-item upcoming"><span class="timeline-dot"></span><div><strong>Send gallery to client</strong><p>Next step when your pairs are ready.</p></div></div>')+'</div></section>';
-    if (cur.notes) h += '<section class="sec card"><h2>Job notes</h2><p>'+esc(cur.notes)+'</p></section>';
+    const timelineHtml = '<details class="sec card timeline-card"><summary>Job timeline</summary><div class="timeline">'+timeline.map(ev=>'<div class="timeline-item"><span class="timeline-dot"></span><div><strong>'+esc(ev.title)+'</strong><p>'+esc(ev.detail)+'</p><small>'+esc(new Date(ev.t).toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}))+'</small></div></div>').join('')+(cur.share?'':'<div class="timeline-item upcoming"><span class="timeline-dot"></span><div><strong>Send gallery to client</strong><p>Next step when your pairs are ready.</p></div></div>')+'</div></details>';
     if (!ps.length) h += '<section class="sec card"><h2>Start with the before shots</h2><p class="hint">Photograph the dirty areas first. After the wash, tap After: a faded copy of each before helps you stand in the same spot. Or import photos you already took.</p><div class="row"><button class="btn primary" data-act="cam-before">' + ico('cam') + ' Before camera</button><label class="btn">' + ico('img') + ' Import photos<input class="files" type="file" accept="image/*" multiple hidden></label></div></section>';
     if (g.pairs.length) h += '<section class="sec card share" id="share"></section><section class="sec"><h2>Before and after</h2><div class="pairs">' + g.pairs.map((p, i) => '<article class="pair" data-pid="' + p.id + '">' + cmp(p, i) +
       '<input class="cap" value="' + esc(p.after.cap || '') + '" maxlength="60" placeholder="Name this area" aria-label="Area name for pair ' + (i + 1) + '"><div class="pactions"><button class="btn quiet sm" data-act="retake" data-pid="' + p.id + '">' + ico('redo') + ' Retake</button><button class="btn quiet sm" data-act="swap" data-pid="' + p.id + '">' + ico('swap') + ' Swap</button><button class="btn quiet sm" data-act="unpair" data-pid="' + p.id + '">' + ico('unlink') + ' Unpair</button><button class="btn quiet sm" data-act="img" data-pid="' + p.id + '">' + ico('save') + ' Image</button></div></article>').join('') + '</div></section>';
     if (g.loose.length) h += '<section class="sec"><h2>To sort (' + g.loose.length + ')</h2><p class="hint">Tap a photo to tag it Before or After. Then press Pair.</p><div class="grid" style="margin-top:12px">' + g.loose.map((p) => '<button class="ph" data-act="tag" data-id="' + p.id + '" aria-label="Photo, ' + (p.role || 'untagged') + '. Open options."><img alt="" src="' + p.thumb + '"><span class="tag ' + (p.role || '') + '">' + (p.role ? p.role.toUpperCase() : 'UNTAGGED') + '</span></button>').join('') + '</div></section>';
     h += '<section class="sec"><h2>Message to your client</h2><textarea id="msg" rows="3" placeholder="Shown at the top of the gallery">' + esc(cur.message || '') + '</textarea><div class="row"><button class="btn sm" data-act="aimsg">Write it for me</button></div></section>' +
+      (cur.notes ? '<section class="sec card"><h2>Job notes</h2><p>' + esc(cur.notes) + '</p></section>' : '') + timelineHtml +
       '<div class="dock"><div class="dock-in"><button class="btn" data-act="cam-before">' + ico('cam') + ' Before</button><button class="btn" data-act="cam-after">' + ico('cam') + ' After</button><label class="btn">' + ico('img') + ' Import<input class="files" type="file" accept="image/*" multiple hidden></label><button class="btn' + (g.loose.length > 1 ? ' primary' : '') + '" data-act="pair">' + ico('pair') + ' Pair</button></div></div>';
     app.innerHTML = h; window.scrollTo(0, y); Gallery.initSliders(app, { nudge: false }); updateNet(); renderShare();
   }
@@ -407,23 +410,63 @@
     app.innerHTML='<div class="page-head"><div><h1>Job calendar</h1><p>Keep scheduled dates, deadlines, and completed work in one place.</p></div><div class="page-tools"><button class="btn" data-act="home">All jobs</button><button class="btn primary" data-act="new">＋ New job</button></div></div><div class="calendar-wrap"><div class="cal-toolbar"><button class="btn" data-act="cal-prev" aria-label="Previous month">‹</button><h2>'+calCursor.toLocaleDateString(undefined,{month:'long',year:'numeric'})+'</h2><button class="btn" data-act="cal-next" aria-label="Next month">›</button></div><div class="cal-grid">'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>'<div class="cal-dow">'+d+'</div>').join('')+cells+'</div></div><section class="cal-agenda"><h2>'+esc(fmtDate(calSelected))+' · Schedule</h2>'+(selected.length?selected.map(j=>'<div class="agenda-item"><div><h3>'+esc(j.name)+'</h3><p>'+esc([j.client,j.address].filter(Boolean).join(' · '))+'</p><p>'+ (j.date===calSelected?'Job date':'') +(j.date===calSelected&&j.dueDate===calSelected?' · ':'') +(j.dueDate===calSelected?'Due date':'')+'</p></div><button class="btn" data-act="open" data-id="'+esc(j.id)+'">Open job</button></div>').join(''):'<div class="empty"><b>No jobs on this date</b>Pick another day or create a job with a job date and due date.</div>')+'</section>';
   }
   async function renderContacts() {
-    cur=null; dropUrls(); const jobs=await all('jobs'); let saved=[]; try{saved=JSON.parse(localStorage.getItem('rinse.contacts')||'[]')}catch(e){}
+    cur=null; dropUrls(); const jobs=await all('jobs'); let saved=[]; try{saved=JSON.parse(localStorage.getItem(contactsKey())||'[]')}catch(e){}
     const map=new Map(); jobs.forEach(j=>{if(j.client){const k=j.client.toLowerCase();const c=map.get(k)||{name:j.client,phone:'',email:'',jobs:[]};c.jobs.push(j);if(j.phone)c.phone=j.phone;map.set(k,c);}}); saved.forEach(c=>{const k=(c.name||'').toLowerCase();if(k){const old=map.get(k)||{name:c.name,phone:'',email:'',jobs:[]};map.set(k,Object.assign(old,c));}});
     const contacts=[...map.values()].sort((a,b)=>a.name.localeCompare(b.name));
     app.innerHTML='<div class="page-head"><div><h1>Contacts</h1><p>A lightweight customer book built from your jobs. Import device contacts where your browser supports it, or export a CSV for your CRM.</p></div><div class="page-tools"><button class="btn" data-act="contacts-import">Import device contacts</button><button class="btn" data-act="contacts-export">Export CSV</button><button class="btn primary" data-act="contacts-add">＋ Add contact</button></div></div><div class="contact-grid">'+(contacts.length?contacts.map(c=>'<article class="contact-card"><div class="contact-avatar">'+esc(c.name.split(/\s+/).map(x=>x[0]).slice(0,2).join('').toUpperCase())+'</div><div class="contact-copy"><h3>'+esc(c.name)+'</h3><p>'+esc(c.phone||c.email||'No phone or email saved')+'</p><p>'+c.jobs.length+' linked job'+(c.jobs.length===1?'':'s')+'</p>'+(c.jobs.length?'<button class="btn sm" data-act="open" data-id="'+esc(c.jobs[0].id)+'">Latest job</button>':'')+'</div></article>').join(''):'<div class="empty"><b>No contacts yet</b>Customer names from jobs appear here. Add a contact or import supported device contacts.</div>')+'</div><p class="hint" style="margin-top:18px">Privacy note: contacts are stored locally in this browser. This is not a live sync with your phone address book or CRM.</p>';
   }
   function syncDetails() { all('outbox').then(async items=>{ const jobs=await all('jobs'); const itemsUi=items.map(it=>{const j=jobs.find(x=>x.id===it.jobId);return [(it.type==='publish'?'Publish gallery':'CRM delivery')+' · '+((j&&j.name)||(it.payload&&it.payload.job&&it.payload.job.name)||'Job'),null];}); sheet('Sync & delivery queue', [['Connection: '+(navigator.onLine?'Online':'Offline'),null],['Queued actions: '+items.length,null]].concat(itemsUi).concat([['Retry queued actions',()=>flush()],['Open settings / CRM',()=>openSettings()],['Done',null]])); }); }
   async function contactsImport() {
-    if(navigator.contacts && navigator.contacts.select) { try {const picked=await navigator.contacts.select(['name','tel','email'],{multiple:true});let saved=[];try{saved=JSON.parse(localStorage.getItem('rinse.contacts')||'[]')}catch(e){};picked.forEach(c=>saved.push({name:(c.name||[])[0]||'Contact',phone:(c.tel||[])[0]||'',email:(c.email||[])[0]||''}));localStorage.setItem('rinse.contacts',JSON.stringify(saved));toast('Imported '+picked.length+' contact(s).');return renderContacts();}catch(e){toast('Contact picker cancelled or unavailable.');return;} }
-    sheet('Import contacts',[['Choose a CSV file',()=>{const i=document.createElement('input');i.type='file';i.accept='.csv,text/csv';i.onchange=async()=>{const f=i.files[0];if(!f)return;const lines=(await f.text()).split(/\r?\n/).filter(Boolean);const rows=lines.slice(1).map(line=>line.split(',').map(x=>x.trim().replace(/^"|"$/g,''))).filter(x=>x[0]);let saved=[];try{saved=JSON.parse(localStorage.getItem('rinse.contacts')||'[]')}catch(e){};rows.forEach(r=>saved.push({name:r[0],phone:r[1]||'',email:r[2]||''}));localStorage.setItem('rinse.contacts',JSON.stringify(saved));toast('Imported '+rows.length+' contacts.');renderContacts();};i.click();}],['Cancel',null]]);
+    if(navigator.contacts && navigator.contacts.select) { try {const picked=await navigator.contacts.select(['name','tel','email'],{multiple:true});let saved=[];try{saved=JSON.parse(localStorage.getItem(contactsKey())||'[]')}catch(e){};picked.forEach(c=>saved.push({name:(c.name||[])[0]||'Contact',phone:(c.tel||[])[0]||'',email:(c.email||[])[0]||''}));localStorage.setItem(contactsKey(),JSON.stringify(saved));toast('Imported '+picked.length+' contact(s).');return renderContacts();}catch(e){toast('Contact picker cancelled or unavailable.');return;} }
+    sheet('Import contacts',[['Choose a CSV file',()=>{const i=document.createElement('input');i.type='file';i.accept='.csv,text/csv';i.onchange=async()=>{const f=i.files[0];if(!f)return;const lines=(await f.text()).split(/\r?\n/).filter(Boolean);const rows=lines.slice(1).map(line=>line.split(',').map(x=>x.trim().replace(/^"|"$/g,''))).filter(x=>x[0]);let saved=[];try{saved=JSON.parse(localStorage.getItem(contactsKey())||'[]')}catch(e){};rows.forEach(r=>saved.push({name:r[0],phone:r[1]||'',email:r[2]||''}));localStorage.setItem(contactsKey(),JSON.stringify(saved));toast('Imported '+rows.length+' contacts.');renderContacts();};i.click();}],['Cancel',null]]);
   }
-  async function contactsExport() { const jobs=await all('jobs');let saved=[];try{saved=JSON.parse(localStorage.getItem('rinse.contacts')||'[]')}catch(e){};const m=new Map();jobs.forEach(j=>{if(j.client){const k=j.client.toLowerCase();if(!m.has(k))m.set(k,{name:j.client,phone:j.phone||'',email:''});}});saved.forEach(c=>{if(c.name)m.set(c.name.toLowerCase(),c)});const csv=['Name,Phone,Email',...[...m.values()].map(c=>[c.name,c.phone,c.email].map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(','))].join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='rinse-contacts.csv';a.click();toast('Contacts exported.'); }
-  function addContact() { const name=prompt('Contact name');if(!name||!name.trim())return;const phone=prompt('Phone (optional)')||'',email=prompt('Email (optional)')||'';let saved=[];try{saved=JSON.parse(localStorage.getItem('rinse.contacts')||'[]')}catch(e){};saved.push({name:name.trim(),phone:phone.trim(),email:email.trim()});localStorage.setItem('rinse.contacts',JSON.stringify(saved));renderContacts(); }
+  async function contactsExport() { const jobs=await all('jobs');let saved=[];try{saved=JSON.parse(localStorage.getItem(contactsKey())||'[]')}catch(e){};const m=new Map();jobs.forEach(j=>{if(j.client){const k=j.client.toLowerCase();if(!m.has(k))m.set(k,{name:j.client,phone:j.phone||'',email:''});}});saved.forEach(c=>{if(c.name)m.set(c.name.toLowerCase(),c)});const csv=['Name,Phone,Email',...[...m.values()].map(c=>[c.name,c.phone,c.email].map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(','))].join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='rinse-contacts.csv';a.click();toast('Contacts exported.'); }
+  function addContact() { const name=prompt('Contact name');if(!name||!name.trim())return;const phone=prompt('Phone (optional)')||'',email=prompt('Email (optional)')||'';let saved=[];try{saved=JSON.parse(localStorage.getItem(contactsKey())||'[]')}catch(e){};saved.push({name:name.trim(),phone:phone.trim(),email:email.trim()});localStorage.setItem(contactsKey(),JSON.stringify(saved));renderContacts(); }
 
   // ---------- actions ----------
   const pairOf = async (pid) => groupPairs(await photosOf(cur.id)).pairs.find((p) => p.id === pid);
   async function openJob(id) { cur = await getJob(id); await renderJob(); window.scrollTo(0, 0); }
-  async function startDemo() { try { const d = (await all('jobs')).filter((j) => j.demo).sort((a, b) => b.created - a.created)[0]; if (d && (await photosOf(d.id)).length >= 6) return openJob(d.id); } catch (e) {} progress('Setting up the demo…'); const id = await makeDemo(); progress(); await openJob(id); }
+  // ---------- workspaces: your own jobs vs the sample demo ----------
+  const DEMO_ASSETS = []; for (let n = 1; n <= 11; n++) DEMO_ASSETS.push('/paired-photos/' + n + '-1.jpg', '/paired-photos/' + n + '-2.jpg');
+  function precacheDemoAssets() {
+    if (!('caches' in window)) return;
+    caches.open('rinse-demo-v1').then((c) => Promise.all(DEMO_ASSETS.map((u) => c.add(u).catch(() => {})))).catch(() => {});
+  }
+  function updateBanner() {
+    const b = $('#demo-banner'); if (!b) return;
+    b.hidden = mode() !== 'demo';
+    document.body.classList.toggle('is-demo', mode() === 'demo');
+  }
+  async function seedDemo(announce) {
+    try {
+      if (await demoReady()) { if (announce) toast('Demo workspace: 11 sample jobs.'); precacheDemoAssets(); return; }
+      progress('Loading sample jobs…');
+      await ensureDemoWorkspace(true);
+      progress();
+      await renderHome();
+      precacheDemoAssets();
+      if (announce) toast('Demo ready: 11 sample jobs.');
+    } catch (e) {
+      progress();
+      toast('Some sample photos could not load. Reset the demo to try again.', 5000);
+    }
+  }
+  async function enterDemo(reset) {
+    cur = null; setMode('demo');
+    if (reset) { if (db) { try { db.close(); } catch (e) {} db = null; } await deleteDb('rinse-demo'); }
+    await open();
+    updateBanner();
+    await renderHome();
+    await seedDemo(true);
+  }
+  async function exitDemo() {
+    cur = null; setMode('live');
+    await open();
+    updateBanner();
+    await renderHome();
+    toast('Back to your own jobs.');
+  }
+  async function startDemo() { await enterDemo(false); if (await getJob('demo-01')) await openJob('demo-01'); }
   function jobDialog(job) {
     const d = $('#jdlg'); $('#j-title').textContent = job ? 'Edit job' : 'New job'; $('#j-name').value = job ? job.name : ''; $('#j-client').value = job ? job.client || '' : ''; $('#j-addr').value = job ? job.address || '' : ''; $('#j-date').value = job ? job.date || new Date().toISOString().slice(0,10) : new Date().toISOString().slice(0,10); $('#j-due').value = job ? job.dueDate || '' : ''; $('#j-notes').value = job ? job.notes || '' : ''; d.dataset.id = job ? job.id : ''; d.returnValue = ''; d.showModal();
   }
@@ -436,6 +479,9 @@
     const pid = el.dataset.pid, id = el.dataset.id;
     if (act === 'new') return jobDialog(null);
     if (act === 'demo') return startDemo();
+    if (act === 'mode-demo') return enterDemo(false);
+    if (act === 'mode-live') return exitDemo();
+    if (act === 'demo-reset') return enterDemo(true);
     if (act === 'open') return openJob(id);
     if (act === 'home') return renderHome('all');
     if (act === 'calendar') return renderCalendar();
@@ -478,61 +524,26 @@
     const S = settings(); pendingLogo = S.logo || ''; $('#s-biz').value = S.business || ''; $('#s-phone').value = S.phone || ''; $('#s-contact').value = S.contact || ''; $('#s-review').value = S.review || ''; $('#s-hook').value = S.hook || ''; $('#s-auto').checked = !!S.autoCrm;
     $('#s-colors').innerHTML = COLORS.map((c) => '<label><input type="radio" name="color" value="' + c + '"' + ((S.color || COLORS[0]) === c ? ' checked' : '') + '><span style="background:' + c + '" title="' + c + '"></span></label>').join('');
     $('#s-theme input[value="' + (S.theme || 'system') + '"]').checked = true;
-    logoUi(); $('#s-ai').textContent = health.ai ? 'AI matching is on (' + health.model + ').' : 'AI matching is off. Photos are still matched on this phone. To turn it on, put your key in .env as LLM_API_KEY and restart.'; $('#dlg').showModal();
+    logoUi(); $('#s-ai').textContent = health.ai ? 'AI matching is on (' + health.model + '). Pairing also works offline on this phone.' : 'AI matching is off right now. Photos are still paired on this phone.'; $('#dlg').showModal();
   }
   function logoUi() { $('#s-logo-img').hidden = !pendingLogo; $('#s-logo-clear').hidden = !pendingLogo; if (pendingLogo) $('#s-logo-img').src = pendingLogo; }
 
-  // ---------- dev: export PAIRS patch from current demo jobs ----------
-  async function exportPairsPatch() {
-    const jobs = (await all('jobs')).filter(j => j.demo);
-    if (!jobs.length) { toast('No demo jobs found.'); return; }
-    const pairs = [];
-    for (const j of jobs.sort((a,b) => a.created - b.created)) {
-      const ps = await photosOf(j.id);
-      const paired = ps.filter(p => p.pairId && p.role);
-      if (!paired.length) continue;
-      const before = paired.find(p => p.role === 'before');
-      const after = paired.find(p => p.role === 'after');
-      if (!before || !after) continue;
-      const cap = after.cap || '';
-      const ext = '.' + (before.name.split('.').pop() || 'jpg');
-      pairs.push({ num: pairs.length + 1, name: j.name, client: j.client, address: j.address, cap, ext });
-    }
-    if (!pairs.length) { toast('No paired photos found.'); return; }
-    const code = `const PAIRS = [\n${pairs.map(p => `      { num: ${p.num}, name: '${p.name.replace(/'/g,"\\'")}', client: '${p.client.replace(/'/g,"\\'")}', address: '${p.address.replace(/'/g,"\\'")}', cap: '${p.cap.replace(/'/g,"\\'")}', ext: '${p.ext}' }`).join(',\n')}\n    ];`;
-    const blob = new Blob([code], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'pairs-patch.js'; a.click(); URL.revokeObjectURL(url);
-    toast('PAIRS patch downloaded. Replace the PAIRS array in app.js with this.');
-  }
-
-  async function clearDemoJobs() {
-    if (!confirm('Delete all demo jobs and their photos?')) return;
-    const jobs = (await all('jobs')).filter(j => j.demo);
-    for (const j of jobs) {
-      const ps = await photosOf(j.id);
-      for (const p of ps) await del('photos', p.id);
-      await del('jobs', j.id);
-    }
-    toast('Demo jobs cleared.'); renderHome();
-  }
-
   // ---------- boot ----------
   app.addEventListener('click', (e) => { const b = e.target.closest('[data-act]'); if (b) { e.preventDefault(); onAct(b.dataset.act, b).catch((er) => { progress(); toast('Something went wrong. Try again.'); console.error(er); }); } });
+  const banner = $('#demo-banner');
+  if (banner) banner.addEventListener('click', (e) => { const b = e.target.closest('[data-act]'); if (b) { e.preventDefault(); onAct(b.dataset.act, b).catch((er) => { progress(); toast('Something went wrong. Try again.'); console.error(er); }); } });
   app.addEventListener('change', async (e) => {
     if (e.target.classList.contains('files')) { const f = e.target.files; await importMany(f); e.target.value = ''; return; }
     if (e.target.id === 'msg') { cur.message = e.target.value.slice(0, 600); cur.autoMsg = false; await put('jobs', cur); return renderShare(); }
     if (e.target.classList.contains('cap')) { const pr = await pairOf(e.target.closest('.pair').dataset.pid); if (pr) { pr.after.cap = e.target.value.trim().slice(0, 60); await put('photos', pr.after); const g = groupPairs(await photosOf(cur.id)); view.sigNow = pairSig(cur, g.pairs, settings()); renderShare(); } }
   });
-  $('#home-link').onclick = (e) => { e.preventDefault(); renderHome('all'); }; $('#calendar-top').onclick = () => renderCalendar(); $('#contacts-top').onclick = () => renderContacts(); $('#demo-top').onclick = startDemo; $('#settings').onclick = openSettings;
+  $('#home-link').onclick = (e) => { e.preventDefault(); renderHome('all'); }; $('#calendar-top').onclick = () => renderCalendar(); $('#contacts-top').onclick = () => renderContacts(); $('#settings').onclick = openSettings;
   $('#net').onclick = () => { toast(navigator.onLine ? 'Syncing…' : 'Still offline. Rinse will sync when the signal returns.'); flush(); };
   ['#dlg', '#sheet', '#jdlg'].forEach((s) => $(s).addEventListener('click', (e) => { if (e.target === e.currentTarget) e.currentTarget.close(); }));
   $('#s-logo').onchange = async (e) => { const f = e.target.files[0]; if (!f) return; try { const b = await decode(f); pendingLogo = scale(b, b.width, b.height, 256, .9).url('image/png'); logoUi(); } catch (er) { toast('Could not read that image.'); } e.target.value = ''; };
   $('#s-logo-clear').onclick = () => { pendingLogo = ''; logoUi(); };
   $('#s-test').onclick = async () => { const u = $('#s-hook').value.trim(); if (!okHook(u)) { toast('Enter an https:// webhook address first.'); return; } if (!navigator.onLine) { toast('You are offline.'); return; }
     try { await postHook(u, { event: 'rinse_test', business: $('#s-biz').value.trim(), job: { id: 'test', name: 'Test job', client: 'Test client', address: '1 Example St', date: new Date().toISOString().slice(0, 10) }, photos: 8, pairs: 4, areas: 'Driveway, Deck', message: 'This is a test from Rinse.', gallery_url: 'https://example.com/g/test', sent_at: new Date().toISOString() }); toast('Test sent. Check your Zap or scenario history.', 4500); } catch (e) { toast('Could not reach that address.'); } };
-  const ep = $('#s-export-pairs'); if (ep) ep.onclick = exportPairsPatch;
-  const cd = $('#s-clear-demos'); if (cd) cd.onclick = clearDemoJobs;
   $('#set-form').onsubmit = (e) => { if (e.submitter && e.submitter.value === 'ok') { const col = ($('#s-colors input:checked') || {}).value || COLORS[0];
     const theme = ($('#s-theme input:checked') || {}).value || 'system';
     localStorage.setItem('rinse.settings', JSON.stringify({ business: $('#s-biz').value.trim().slice(0, 80), phone: $('#s-phone').value.trim().slice(0, 30), contact: $('#s-contact').value.trim().slice(0, 120), review: $('#s-review').value.trim().slice(0, 300), color: col, logo: pendingLogo || '', hook: $('#s-hook').value.trim().slice(0, 500), autoCrm: $('#s-auto').checked, theme })); applyTheme(theme); toast('Saved.'); flush(); if (cur) renderJob(); } };
@@ -541,5 +552,25 @@
     job.name = name.slice(0, 80); job.client = $('#j-client').value.trim().slice(0, 80); job.address = $('#j-addr').value.trim().slice(0, 120); job.date = $('#j-date').value || new Date().toISOString().slice(0,10); job.dueDate = $('#j-due').value || ''; job.notes = $('#j-notes').value.trim().slice(0,240); await put('jobs', job); if (old) { cur = job; renderJob(); } else openJob(job.id); };
   window.addEventListener('online', () => { updateNet(); flush(); }); window.addEventListener('offline', updateNet);
   if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
-  open().then(async () => { const S = settings(); applyTheme(S.theme || 'system'); await ensureDemoWorkspace(); await renderHome(); fetch('api/health').then((r) => r.json()).then((h) => { health = h; if (cur) renderShare(); }).catch(() => {}); flush(); setInterval(() => { if (navigator.onLine) flush(); }, 25000); window.__rinse = { smartPair: () => smartPair(false), get cur() { return cur; }, health: () => health }; });
+  // Deep links: /?demo=1 opens the sample workspace, &reset=1 reseeds it.
+  const params = new URLSearchParams(location.search);
+  if (params.get('demo') === '1') setMode('demo');
+  if (params.has('demo') || params.has('reset')) {
+    const clean = location.pathname + (location.hash || '');
+    history.replaceState(null, '', clean || '/');
+  }
+  const demoReset = params.has('demo') && params.get('reset') === '1';
+  (async () => {
+    if (demoReset) await deleteDb('rinse-demo');
+    await open();
+    applyTheme(settings().theme || 'system');
+    updateBanner();
+    if (mode() === 'live') await purgeDemoFromLive();
+    await renderHome();
+    if (mode() === 'demo') seedDemo(false);
+    fetch('api/health').then((r) => r.json()).then((h) => { health = h; if (cur) renderShare(); }).catch(() => {});
+    flush();
+    setInterval(() => { if (navigator.onLine) flush(); }, 25000);
+    window.__rinse = { smartPair: () => smartPair(false), get cur() { return cur; }, health: () => health };
+  })().catch((e) => { progress(); console.error(e); app.innerHTML = '<div class="empty"><b>Rinse could not start</b>Reload the page. Your photos are still on this phone.</div>'; });
 })();

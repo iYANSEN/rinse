@@ -84,7 +84,7 @@
     '.intro{position:relative}.intro::after{content:"";position:absolute;right:0;top:26px;width:84px;height:84px;background:var(--brand);opacity:.13;pointer-events:none;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Crect x=\'14\' y=\'14\' width=\'72\' height=\'72\'/%3E%3Crect x=\'14\' y=\'14\' width=\'72\' height=\'72\' transform=\'rotate(45 50 50)\'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Crect x=\'14\' y=\'14\' width=\'72\' height=\'72\'/%3E%3Crect x=\'14\' y=\'14\' width=\'72\' height=\'72\' transform=\'rotate(45 50 50)\'/%3E%3C/svg%3E") center/contain no-repeat}',
     '.count{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.03em;font-size:.8rem;box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 10%,transparent)}.count::before{content:"\\25A3  "}',
     '.cmp{box-shadow:0 0 0 1px rgba(0,0,0,.02),0 2px 6px rgba(0,0,0,.04),0 18px 36px -16px color-mix(in srgb,var(--brand) 55%,transparent)}.cmp .knob{box-shadow:0 0 0 4px rgba(25,211,162,.35),0 2px 10px rgba(0,0,0,.35);animation:ping 2.6s ease-out infinite}@keyframes ping{70%,100%{box-shadow:0 0 0 14px rgba(25,211,162,0),0 2px 10px rgba(0,0,0,.35)}}.cmp .line{box-shadow:0 0 12px rgba(255,255,255,.9),0 0 0 1px rgba(0,0,0,.12)}',
-    'footer .wrap span:last-child::after{content:" \\00b7  Crafted in Settat, Morocco"}',
+    'footer .wrap span:last-child::after{content:" \\00b7  Crafted in Agadir, Morocco"}',
     '@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}'
   ].join('\n');
 
