@@ -2,7 +2,9 @@
 
 Before/after photo management for pressure-washing and other exterior-service crews. Shoot on site, Rinse pairs the photos, and your client gets **one link with a slider**. Works with no signal. Built for the Devpost *Build With AI: Basics* hackathon.
 
-**Try it:** open the app and press **Explore the demo · 11 jobs**, or go straight to `/?demo=1` (no sign-in, no key needed). Your own workspace starts empty.
+**Try it:** **[rinse-weld-kappa.vercel.app/?demo=1](https://rinse-weld-kappa.vercel.app/?demo=1)** — 11 sample jobs, no sign-in and no API key needed (or press **Explore the demo · 11 jobs** on the home screen). Your own workspace starts empty.
+
+**See a client link:** [rinse-weld-kappa.vercel.app/g/iO3CCoUAEW0](https://rinse-weld-kappa.vercel.app/g/iO3CCoUAEW0)
 
 ## What it does
 | The business owner asked for | In Rinse |
@@ -36,7 +38,7 @@ The key stays on the server and is never sent to the browser. Without a key ever
 5. Redeploy, open the link on a phone, "Add to Home Screen".
 
 ## Tests
-`node server.js` in one terminal, then `npm run test:e2e` (needs python3 + playwright, Pillow, scikit-image, numpy). Test photos are generated from real photographs by `test/make_photos.py`. 74 checks: pairing accuracy, camera overlay, offline reload, hosted links, CRM exactly-once, AI success / bad key / odd proxies, XSS and token abuse, both storage backends.
+`node server.js` in one terminal, then `npm run test:e2e` (needs python3 + playwright, Pillow, scikit-image, numpy). Test photos are generated from real photographs by `test/make_photos.py`. The suite covers pairing accuracy, camera overlay, offline reload, hosted links, CRM exactly-once, AI success / bad key / odd proxies, XSS and token abuse, both storage backends.
 
 ## Honest limits
 - Tested with real photographs plus synthetic grime, **not real pressure-washing jobs**. Visual matching scores 0.85-0.94 on true pairs and left unrelated photos alone, but dirt that hides all structure will need a manual tag.
