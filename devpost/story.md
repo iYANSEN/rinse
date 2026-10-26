@@ -34,11 +34,22 @@ I am an electrical engineering student in Morocco, and every app I had built bef
 
 **A phone held in one hand.** Everything is built at 360–390 px first: a status dot instead of a crowded header, the client link above the fold, calendar dots instead of clipped labels, 16 px inputs so iOS does not zoom.
 
+## What the competitor research changed
+
+The obvious comparison is CompanyCam — the tool crews name when they say this software is too expensive. Its listed plans run from about $79 a month for a single user to $249 for a crew, plus roughly $34 per extra seat (figures from third-party price trackers; worth checking directly). Reading its reviews and its neighbours' shaped the build:
+
+- The **ghost-overlay camera** is the feature crews describe as the reason they stay, so it is the first thing you see when you open a job.
+- The **client link is the product**, not an export. It has to look better than a WhatsApp album.
+- **Offline is table stakes.** A driveway has no signal, and a tool that needs one is a tool you quietly stop using.
+- Everything else the incumbents carry — team management, project tracking, dashboards — is what makes them heavy. Leaving it out is the feature.
+
 ## How it is built
 
 Vanilla JavaScript, no framework and no build step — one page, one service worker, one IndexedDB database per workspace. Photos are downscaled with canvas to 1600 px plus a 384 px thumbnail, and a 32×24 fingerprint is computed at capture time for pairing. The client gallery is server-side HTML: self-contained, inline CSS, escaped user text, real `<input type="range">` sliders so it works with a keyboard and a screen reader. Hosted links are stored in a private Blob store from a small serverless function; there is no framework on either side.
 
 The whole thing ships as a PWA: installable, cached, and it reloads offline. I verified that by disabling the network in a real browser and reloading the demo — 11 jobs and their photos still render.
+
+The interface follows a written design system (`DESIGN.md`): structure from VoltAgent/awesome-design-md, a photo-first base from its "Airbnb" system, and a rule borrowed from marvkr/better-design. The first pass failed contrast checks — the teal and green left white text at roughly 3:1 — so both were darkened until the primary colour reached 5.2:1.
 
 ![The client link on a phone: one slider, before and after labels, caption](https://raw.githubusercontent.com/iYANSEN/rinse/master/devpost/shots/client-link.jpg)
 
@@ -52,7 +63,7 @@ I ran the Devpost Learn Skill Pack in order, and each step changed what got buil
 
 Flipped interaction is what made those documents mine instead of a template. The agent proposed; I decided. I chose the offline-first constraint, the demo split, and — when time got short — the scope call to finish and polish the demo instead of adding calendar sync or new AI features. `5-build` then worked the spec in ordered steps, verifying and committing each one, and `6-ship` is where this text comes from.
 
-The documents live in the repo (`devpost/scope.md`, `prd.md`, `spec.md`) and are kept in sync with the code on purpose, not as decoration.
+The documents live in the repo root (`scope.md`, `prd.md`, `spec.md`, plus `BUILD_LOG.md`) and are kept in sync with the code on purpose, not as decoration.
 
 ## Challenges
 

@@ -369,7 +369,7 @@
       (waiting ? '<span class="badge wait">Waiting to sync</span>' : j.share ? '<span class="badge">Shared</span>' : '') + '</div><div class="job-title-row"><h3>' + esc(j.name) + '</h3><span class="job-state ' + statusClass + '">' + esc(status) + '</span></div><small>' + esc([j.client, fmtDate(j.date)].filter(Boolean).join(' · ')) + '</small><small>' + g.pairs.length + ' pair' + (g.pairs.length === 1 ? '' : 's') + (g.loose.length ? ' · ' + g.loose.length + ' to sort' : '') + (pendingCRM ? ' · CRM pending' : '') + '</small></button>'
     ).join('');
     const syncLabel = !navigator.onLine ? 'OFFLINE' : pendingOps ? pendingOps + ' PENDING' : 'ALL SAFE';
-    app.innerHTML = '<section class="hero"><h1>Before and after photos, ready to send</h1><p>Capture the work, review the pairs, and send your client one beautiful link. Keep shooting without a signal.</p>' +
+    app.innerHTML = '<section class="hero"><h1>Before and after photos, ready to send</h1><p>For pressure-washing and exterior-cleaning crews: capture the work, review the pairs, and send your client one beautiful link. Keep shooting without a signal.</p>' +
       '<div class="row"><button class="btn primary" data-act="new">New job</button>' + (mode() === 'demo' ? '<button class="btn" data-act="mode-live">Exit demo</button>' : '<button class="btn" data-act="demo">Explore the demo · 11 jobs</button>') + '</div>' +
       '<div class="status-win"><div class="ttl">[ SYSTEM ] &nbsp; CREW STATUS</div>' +
       '<button class="status-cell" type="button" data-act="filter-all" aria-label="Show all jobs"><small>JOBS</small><strong>' + rows.length + '</strong><span class="status-note">Tap to view all</span></button>' +

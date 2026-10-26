@@ -90,6 +90,6 @@ Accounts and a small team (two phones, one job), cross-device sync, timestamp/GP
 
 ## Notes for the submission form
 
-- The hackathon asks for a public repo. Keep `README.md`, `devpost/scope.md`, `devpost/prd.md` and `devpost/spec.md` at the top of the repo — they describe exactly what was built.
+- The hackathon asks for a public repo with `scope.md`, `prd.md` and `spec.md` that match what was built. They are at the repo root, next to `README.md` and `BUILD_LOG.md`.
 - Do not paste any API key or `.env` contents into Devpost, the video, or the repo.
 - The sample photos in `paired-photos/` are bundled placeholders for the demo, not a customer's job.

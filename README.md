@@ -6,6 +6,8 @@ Before/after photo management for pressure-washing and other exterior-service cr
 
 **See a client link:** [rinse-weld-kappa.vercel.app/g/iO3CCoUAEW0](https://rinse-weld-kappa.vercel.app/g/iO3CCoUAEW0)
 
+**Planning docs:** [scope.md](scope.md) · [prd.md](prd.md) · [spec.md](spec.md) · [build log](BUILD_LOG.md) — with the [competitor research](COMPETITORS.md) and the [design system](DESIGN.md) behind them.
+
 ## What it does
 | The business owner asked for | In Rinse |
 |---|---|
