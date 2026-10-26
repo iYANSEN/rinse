@@ -10,7 +10,7 @@ A pressure-washing crew finishes a driveway, takes thirty photos on a phone, and
 
 I found the problem on [r/AppIdeas](https://www.reddit.com/r/AppIdeas/s/804F3d7JBV). A pressure-washing owner had written out exactly what he needed, in his own words: group the photos by job, make before/after obvious instead of two separate albums, give the client something that looks professional, keep working when the signal drops, and push the finished gallery into his CRM. He also said why: 20–40 photos per job, and the established tools cost more per month than some jobs bring in.
 
-I am an electrical engineering student in Morocco, and every app I had built before this one was for personal use — tools only I ever opened. Designing for a stranger changed the requirements in a way I did not expect. A friend will tell you it looks nice; a stranger with money on the line tells you it is useless if the slider is hard to drag. The five asks became the scope, and every screen had to answer one of them or get cut.
+Every app I had built before this one was for me. Designing for a stranger changed the requirements in a way I did not expect. A friend will tell you it looks nice; a stranger with money on the line tells you it is useless if the slider is hard to drag. His five asks became the scope, and every screen had to answer one of them or get cut.
 
 ## What Rinse does
 
@@ -22,30 +22,39 @@ I am an electrical engineering student in Morocco, and every app I had built bef
 
 ![Job page: client link card, then the first before/after pair](https://raw.githubusercontent.com/iYANSEN/rinse/master/devpost/shots/job.jpg)
 
-## The constraints that shaped the design
+## A demo of real states
 
-**Offline-first is the architecture, not a feature.** The crew photographs in a driveway with one bar of signal, so capture cannot depend on a server: photos are written straight into IndexedDB. Link creation and CRM webhooks queue in an outbox and drain when the connection returns. The app itself is a service worker shell, so it opens and works with the network completely off.
+The app you open is empty; the samples live in a separate workspace behind `?demo=1`. It holds 11 jobs and 21 photographs — a concrete driveway, a balcony, house siding, a brick walkway, front steps — taken from a working pressure-washing business's own before/after portfolio. Real surfaces, real dirt, not stock renderings, and not my jobs; the sample workspace says so.
 
-**The AI is optional, on purpose.** Pairing runs in two layers: a deterministic matcher using a 32×24 image fingerprint plus capture order, and an optional language-model pass that can also write area captions and the client message. The deterministic layer means the product still works with no key, no network and no cost — the model makes it nicer, never load-bearing. When the model is there, it is called from a serverless function so the key never touches the browser.
-
-**A demo that shows real states.** The app you open is empty; the samples live in a separate workspace behind `?demo=1`, with 11 jobs and 21 photos. Nine jobs are finished pairs, one is still waiting for its after photo, one is unpaired — because a demo where every card is perfect hides exactly the states a new user has to learn. A banner marks the sample workspace and offers **Reset** and **Exit demo**, and the two workspaces never mix.
-
-**One link, many versions.** The gallery is a versioned snapshot: updating replaces the content and keeps the URL, so "the client already has the link" is not a reason to avoid fixing a caption.
-
-**A phone held in one hand.** Everything is built at 360–390 px first: a status dot instead of a crowded header, the client link above the fold, calendar dots instead of clipped labels, 16 px inputs so iOS does not zoom.
+Nine jobs are finished pairs, one is still waiting for its after photo, one is unpaired. The dates run across nine days with two jobs upcoming on the calendar, because a demo where every card is perfect hides exactly the states a new user has to learn. A banner marks the sample workspace and offers **Reset** and **Exit demo**, and the two databases never mix.
 
 ## What the competitor research changed
 
-The obvious comparison is CompanyCam — the tool crews name when they say this software is too expensive. Its listed plans run from about $79 a month for a single user to $249 for a crew, plus roughly $34 per extra seat (figures from third-party price trackers; worth checking directly). Reading its reviews and its neighbours' shaped the build:
+The obvious comparison is [CompanyCam](https://companycam.com), the tool crews name when they say this software is too expensive. Its published plans sit somewhere in the range of $60–$80 a month for a single user on annual billing, with a higher month-to-month price and a per-seat charge on top — third-party trackers disagree on the exact figures, so check them before quoting me. The research also turned up smaller, sharper tools: [GalaRay](https://galaray.app) and Proofly both sell guided before/after capture with shareable gallery links, [QuoteIQ](https://myquoteiq.com) comes at pressure washing from quoting, and [Jobber](https://www.getjobber.com) covers the rest of the business.
 
-- The **ghost-overlay camera** is the feature crews describe as the reason they stay, so it is the first thing you see when you open a job.
-- The **client link is the product**, not an export. It has to look better than a WhatsApp album.
+That crowded field changed my strategy more than any feature list:
+
+- **The ghost-overlay camera** is the thing crews say keeps them on CompanyCam, so it is the first thing you do in a job, not a setting.
+- **The client link is the product**, not an export. It has to look better than a WhatsApp album, because that is what it competes with.
 - **Offline is table stakes.** A driveway has no signal, and a tool that needs one is a tool you quietly stop using.
-- Everything else the incumbents carry — team management, project tracking, dashboards — is what makes them heavy. Leaving it out is the feature.
+- **Everything else the incumbents carry** — team management, project tracking, dashboards — is what makes them heavy. Leaving it out is the feature.
+- **Don't fight the CRM.** Rinse posts the finished gallery to Zapier or Make and stays out of the invoicing business.
+
+The same review killed a feature I had already shipped. My first dashboard had a gamified rank — a letter grade and a "reach the next rank" line. It looked good in a screenshot and told the owner nothing. It is now **Ready to send**: a count of finished galleries that have not gone out yet, and tapping it filters to those jobs. A metric that does not tell you what to do next is decoration.
+
+## The constraints that shaped the design
+
+**Offline-first is the architecture, not a feature.** Photos are written straight into IndexedDB. Link creation and CRM webhooks queue in an outbox and drain when the connection returns. The app itself is a service-worker shell, so it opens and works with the network completely off.
+
+**The AI is optional, on purpose.** Pairing runs in two layers: a deterministic matcher using a 32×24 image fingerprint plus capture order, and an optional language-model pass that can also write area captions and the client message. The deterministic layer means the product still works with no key, no network and no cost — the model makes it nicer, never load-bearing. When the model is there, it is called from a serverless function so the key never touches the browser. And it is never allowed near the photographs themselves: an AI-generated "after" is not evidence of work.
+
+**One link, many versions.** The gallery is a versioned snapshot: updating replaces the content and keeps the URL, so "the client already has the link" is not a reason to avoid fixing a caption.
+
+**A phone held in one hand.** Everything is built at 360–390 px first: a status dot instead of a crowded header, the client link above the fold, calendar dots instead of clipped labels, 16 px inputs so iOS does not zoom when you tap one.
 
 ## How it is built
 
-Vanilla JavaScript, no framework and no build step — one page, one service worker, one IndexedDB database per workspace. Photos are downscaled with canvas to 1600 px plus a 384 px thumbnail, and a 32×24 fingerprint is computed at capture time for pairing. The client gallery is server-side HTML: self-contained, inline CSS, escaped user text, real `<input type="range">` sliders so it works with a keyboard and a screen reader. Hosted links are stored in a private Blob store from a small serverless function; there is no framework on either side.
+Vanilla JavaScript, no framework and no build step — one page, one service worker, one IndexedDB database per workspace. Photos are downscaled with canvas to 1600 px plus a 384 px thumbnail, and a 32×24 fingerprint is computed at capture time for pairing. The client gallery is server-side HTML: self-contained, inline CSS, escaped user text, real `<input type="range">` sliders so it works with a keyboard and a screen reader. Hosted links live in a private Blob store behind a small serverless function on Vercel; there is no framework on either side, and the deployment is a static site plus that one function.
 
 The whole thing ships as a PWA: installable, cached, and it reloads offline. I verified that by disabling the network in a real browser and reloading the demo — 11 jobs and their photos still render.
 
@@ -69,9 +78,11 @@ The documents live in the repo root (`scope.md`, `prd.md`, `spec.md`, plus `BUIL
 
 **Offline-first is a hundred small decisions.** Storing photos is easy. The hard part is everything that quietly assumes a network: creating a link, encoding a share image, retrying a failed upload, telling the user something is waiting.
 
-**Making AI optional.** An AI feature that is required turns every outage into a broken demo. The deterministic matcher came first; the model sits beside it and can be switched off without changing the product.
+**Making AI optional.** An AI feature that is required turns every outage into a broken demo. The deterministic matcher came first; the model sits beside it and can be switched off without changing the product. The pairing test also taught me the difference between a demo and a feature: one mis-paired photo makes the whole gallery look wrong, so "usually right" was not good enough and the matcher had to be predictable rather than clever.
 
 **Two workspaces, one app.** The demo had to be rich enough to judge and impossible to confuse with real work. Separate databases, fixed sample IDs so seeding is idempotent, and a purge on the live workspace solved it.
+
+**The phone is the product, and the phone is the hardest target.** The camera only opens on HTTPS, the first load of 21 photos used to block the whole app, and a driveway with one bar of signal is not an emulator. I did most of my verification at 390×844 and 360×800, but a desktop browser with a fake camera cannot tell you how iOS Safari behaves, and I say so rather than claim otherwise.
 
 **Keeping the documents true.** Mid-build I made three decisions that changed the architecture — two databases instead of one, Blob storage instead of local disk, AI pushed from required to optional — and each one left the planning documents describing an app that no longer existed. I caught it only by re-reading the spec before submitting. If I could change one thing about the skill pack, it would be an explicit "docs versus build" reconciliation step before shipping.
 
@@ -79,9 +90,14 @@ The documents live in the repo root (`scope.md`, `prd.md`, `spec.md`, plus `BUIL
 
 - Offline-first is not storage, it is a way of thinking about failure.
 - A plan you can test beats a plan you can admire. Every acceptance criterion I wrote down got tested; the features I only "felt good about" got cut.
-- Building for a stranger is the difference between a portfolio and a product.
+- AI is most useful in this product where it is least visible: pairing the hard cases and writing the caption, not touching the photo.
+- A metric that does not tell the user what to do next is decoration — that one cost me a rebuild of the home screen.
 - Shipping is a skill separate from building, and it is the one I had been avoiding.
 
 ## What is next
 
 Accounts and a small team — two phones on one job — then cross-device sync, timestamp and GPS stamps on photos, PDF reports for property managers, link expiry and revocation, and a real two-way CRM integration instead of a webhook. The photographing half is done; the crew half is next.
+
+## What this build does not do
+
+No accounts, no teams, no cross-device sync: photos live in the browser on the device that took them. The CRM step is fire-and-forget — the browser cannot confirm that Zapier finished the job. Hosted links need the Blob store to be configured; without it the app warns instead of pretending the link is permanent. And I have not run it on a real phone camera, only in an emulated phone viewport, so that is the first thing I would test with a crew.
