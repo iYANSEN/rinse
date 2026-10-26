@@ -375,7 +375,7 @@ legend { font-weight:600; font-size:.9rem; color:var(--ink); padding:0; margin-b
 .demo-banner .demo-tag { font:700 .7rem var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--primary); }
 .demo-banner .demo-note { color:var(--muted); }
 .demo-banner .demo-actions { margin-left:auto; display:flex; gap:6px; }
-.demo-banner .btn { background:var(--canvas); }
+.demo-banner .btn:not(.primary) { background:var(--canvas); }
 @media (max-width:640px) {
   .demo-banner { padding:8px 12px; }
   .demo-banner .demo-note { display:none; }
