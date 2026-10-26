@@ -26,19 +26,20 @@ drawn, mocked or generated. The publish in the video is a real upload to the dep
 | 0:28.6 | 0:36.9 | Client gallery, slider | On their phone it's a slider, not a folder of forty photos. He sees the difference before he pays. And the link stays the same when you update the job. |
 | 0:41.6 | 0:46.0 | "Ready to send" filter | Back on the list, ready jobs sort to the top, so you know what to send next. |
 | 0:49.3 | 0:55.0 | Offline: orange dot, SYNC OFFLINE | No signal? The jobs still open, because every photo lives on the device, not in the cloud. |
-| 0:55.8 | 1:10.9 | Docs scene | *(the builder's own recording, Voice 006)* I built this with the Build With AI skill pack: scope, then the product doc, then the technical spec, then the build log. And the AI parts are optional: vanilla JavaScript, no build step. |
+| 0:55.8 | 1:07.2 | Docs scene | *(synthesized)* I built this with the Build With AI skill pack: scope, then the product doc, then the technical spec, then the build log. And the AI parts are optional: vanilla JavaScript, no build step. |
 | 1:12.1 | 1:50.1 | End card | *(the builder's own recording, Voice 007)* So yeah, this is me speaking. This is a simple project to be honest. It wasn't that hard in terms of technical issues… I wanted to build a more complicated app, but it's going to take a lot more… so I just used this for now. I hope you like it. It was a good experience. This is my first hackathon, and have a good day. |
 
 ## Narration sources
 
-- **0:00–0:55** — synthesized with `edge-tts`, voice `en-US-AndrewNeural`, rate +6 %, one file per
+- **0:00–1:07** — synthesized with `edge-tts`, voice `en-US-AndrewNeural`, rate +6 %, one file per
   line, +4.2 dB to sit level, mix normalised to −16 LUFS.
-- **0:55.8–1:10.9** — the builder's phone recording (Voice 006): 90 Hz high-pass, FFT denoise,
-  light compression, fades.
-- **1:12.1–1:50.1** — the builder's phone recording (Voice 007): 3.1 s of dead air cut between
-  phrases (silence under −30 dB held at 0.28 s, 0.50 s after a sentence pause), then 85 Hz
-  high-pass, adaptive FFT denoise (`afftdn`), de-esser, gentle compression, −16 LUFS.
-  The take is dense — 38 s of speech in 41 s of recording, so the tightened file is 37.95 s.
+- **1:12.1–1:50.1** — the builder's phone recording (Voice 007), the only human voice in the cut:
+  3.1 s of dead air cut between phrases (silence under −30 dB held at 0.28 s, 0.50 s after a
+  sentence pause), then 85 Hz high-pass, adaptive FFT denoise (`afftdn`), de-esser, gentle
+  compression, −16 LUFS. The take is dense — 38 s of speech in 41 s of recording, so the tightened
+  file is 37.95 s.
+- An earlier phone recording (Voice 006, the "how I built it" line) was used at 0:55.8 and has been
+  removed at the builder's request.
 - No music bed: nothing licensed was available, and a silent bed is better than a stolen track.
 
 ## Honesty rules the cut obeys
